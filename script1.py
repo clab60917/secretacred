@@ -17,27 +17,31 @@ people = pd.read_excel('people.xlsx')
 custom = pd.read_excel('custom.xlsx')
 departements_c3 = pd.read_excel('departements.xlsx', header=None)
 
-# Renommer les colonnes dans 'custom' pour correspondre à celles de 'people'
-custom.rename(columns={'GGI': 'IGG', 'Email': 'GROUP_MAIL'}, inplace=True)
+# Créer des copies des DataFrames pour les manipulations
+people_copy = people.copy()
+custom_copy = custom.copy()
+
+# Renommer les colonnes dans 'custom_copy' pour correspondre à celles de 'people_copy'
+custom_copy.rename(columns={'GGI': 'IGG', 'Email': 'GROUP_MAIL'}, inplace=True)
 
 # Vérifier que les colonnes nécessaires sont correctement nommées après renommage
-print("Colonnes dans custom après renommage:", custom.columns)
-print("Colonnes dans people:", people.columns)
+print("Colonnes dans custom après renommage:", custom_copy.columns)
+print("Colonnes dans people:", people_copy.columns)
 
-# Fusionner people avec custom pour compléter les informations manquantes
-people = pd.merge(people, custom[['IGG', 'GROUP_MAIL', 'Department']], on='IGG', how='left')
+# Fusionner people_copy avec custom_copy pour compléter les informations manquantes
+merged_data = pd.merge(people_copy, custom_copy[['IGG', 'GROUP_MAIL', 'Department']], on='IGG', how='left')
 
 # Utiliser progress_apply pour voir la progression de fillna
-people['GROUP_MAIL'] = people['GROUP_MAIL_x'].fillna(people['GROUP_MAIL_y'])
-people['Department'] = people['Department_x'].fillna(people['Department_y'])
-people.drop(columns=['GROUP_MAIL_x', 'GROUP_MAIL_y', 'Department_x', 'Department_y'], inplace=True)
+merged_data['GROUP_MAIL'] = merged_data['GROUP_MAIL_x'].fillna(merged_data['GROUP_MAIL_y'])
+merged_data['Department'] = merged_data['Department_x'].fillna(merged_data['Department_y'])
+merged_data.drop(columns=['GROUP_MAIL_x', 'GROUP_MAIL_y', 'Department_x', 'Department_y'], inplace=True)
 
 # Filtrer les départements C3 avec une barre de progression
 c3_departments = set(departements_c3[0])
-people_c3 = people[people['Department'].isin(c3_departments)].progress_apply(lambda x: x)
+filtered_data = merged_data[merged_data['Department'].isin(c3_departments)].progress_apply(lambda x: x)
 
 # Sélectionner les colonnes nécessaires pour le fichier final
-final_data = people_c3[['IGG', 'GROUP_MAIL', 'Department', 'LIB_SERVICE']]
+final_data = filtered_data[['IGG', 'GROUP_MAIL', 'Department', 'LIB_SERVICE']]
 
 # Sauvegarder le fichier final
 final_data.to_excel('C3_accredited_users.xlsx', index=False)
