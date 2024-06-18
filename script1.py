@@ -7,7 +7,6 @@
 6. Générer un nouveau fichier Excel contenant les colonnes IGG, GROUP_MAIL, et LIB_SERVICE pour les utilisateurs C3.
 """
 import pandas as pd
-import pandas as pd
 from tqdm import tqdm
 
 # Initialiser tqdm pour pandas
@@ -18,15 +17,20 @@ people = pd.read_excel('people.xlsx')
 custom = pd.read_excel('custom.xlsx')
 departements_c3 = pd.read_excel('departements.xlsx', header=None)
 
-# Renommer les colonnes pour la correspondance
+# Renommer les colonnes dans 'custom' pour correspondre à celles de 'people'
 custom.rename(columns={'GGI': 'IGG', 'Email': 'GROUP_MAIL'}, inplace=True)
 
-# Fusionner people avec custom pour compléter les informations manquantes
-people_updated = pd.merge(people, custom[['IGG', 'GROUP_MAIL', 'Department']], on='IGG', how='left').progress_apply(lambda x: x)
+# Vérifier que les colonnes nécessaires sont correctement nommées après renommage
+print("Colonnes dans custom après renommage:", custom.columns)
+print("Colonnes dans people:", people.columns)
 
-# Mise à jour des colonnes en utilisant fillna pour appliquer la barre de progression
-people['GROUP_MAIL'] = people['GROUP_MAIL'].fillna(people_updated['GROUP_MAIL'])
-people['Department'] = people['Department'].fillna(people_updated['Department'])
+# Fusionner people avec custom pour compléter les informations manquantes
+people = pd.merge(people, custom[['IGG', 'GROUP_MAIL', 'Department']], on='IGG', how='left')
+
+# Utiliser progress_apply pour voir la progression de fillna
+people['GROUP_MAIL'] = people['GROUP_MAIL_x'].fillna(people['GROUP_MAIL_y'])
+people['Department'] = people['Department_x'].fillna(people['Department_y'])
+people.drop(columns=['GROUP_MAIL_x', 'GROUP_MAIL_y', 'Department_x', 'Department_y'], inplace=True)
 
 # Filtrer les départements C3 avec une barre de progression
 c3_departments = set(departements_c3[0])
