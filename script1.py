@@ -22,26 +22,25 @@ people_copy = people.copy()
 custom_copy = custom.copy()
 
 # Renommer les colonnes dans 'custom_copy' pour correspondre à celles de 'people_copy'
-custom_copy.rename(columns={'GGI': 'IGG', 'Email': 'GROUP_MAIL'}, inplace=True)
-
-# Vérifier que les colonnes nécessaires sont correctement nommées après renommage
-print("Colonnes dans custom après renommage:", custom_copy.columns)
-print("Colonnes dans people:", people_copy.columns)
+custom_copy.rename(columns={'GGI': 'IGG', 'Email': 'GROUP_MAIL', 'Department': 'LIB_SERVICE'}, inplace=True)
 
 # Fusionner people_copy avec custom_copy pour compléter les informations manquantes
-merged_data = pd.merge(people_copy, custom_copy[['IGG', 'GROUP_MAIL', 'Department']], on='IGG', how='left')
+# Utilisation des suffixes pour éviter les conflits de noms de colonnes
+merged_data = pd.merge(people_copy, custom_copy[['IGG', 'GROUP_MAIL', 'LIB_SERVICE']], on='IGG', how='left', suffixes=('', '_custom'))
 
-# Utiliser progress_apply pour voir la progression de fillna
-merged_data['GROUP_MAIL'] = merged_data['GROUP_MAIL_x'].fillna(merged_data['GROUP_MAIL_y'])
-merged_data['Department'] = merged_data['Department_x'].fillna(merged_data['Department_y'])
-merged_data.drop(columns=['GROUP_MAIL_x', 'GROUP_MAIL_y', 'Department_x', 'Department_y'], inplace=True)
+# Utiliser fillna pour combler les informations manquantes
+merged_data['GROUP_MAIL'] = merged_data['GROUP_MAIL'].fillna(merged_data['GROUP_MAIL_custom'])
+merged_data['LIB_SERVICE'] = merged_data['LIB_SERVICE'].fillna(merged_data['LIB_SERVICE_custom'])
+
+# Supprimer les colonnes inutiles après la fusion
+merged_data.drop(columns=['GROUP_MAIL_custom', 'LIB_SERVICE_custom'], inplace=True)
 
 # Filtrer les départements C3 avec une barre de progression
 c3_departments = set(departements_c3[0])
-filtered_data = merged_data[merged_data['Department'].isin(c3_departments)].progress_apply(lambda x: x)
+filtered_data = merged_data[merged_data['LIB_SERVICE'].isin(c3_departments)].progress_apply(lambda x: x)
 
 # Sélectionner les colonnes nécessaires pour le fichier final
-final_data = filtered_data[['IGG', 'GROUP_MAIL', 'Department', 'LIB_SERVICE']]
+final_data = filtered_data[['IGG', 'GROUP_MAIL', 'LIB_SERVICE']]
 
 # Sauvegarder le fichier final
 final_data.to_excel('C3_accredited_users.xlsx', index=False)
