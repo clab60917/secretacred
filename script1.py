@@ -25,7 +25,6 @@ custom_copy = custom.copy()
 custom_copy.rename(columns={'GGI': 'IGG', 'Email': 'GROUP_MAIL', 'Department': 'LIB_SERVICE'}, inplace=True)
 
 # Fusionner people_copy avec custom_copy pour compléter les informations manquantes
-# Utilisation des suffixes pour éviter les conflits de noms de colonnes
 merged_data = pd.merge(people_copy, custom_copy[['IGG', 'GROUP_MAIL', 'LIB_SERVICE']], on='IGG', how='left', suffixes=('', '_custom'))
 
 # Utiliser fillna pour combler les informations manquantes
@@ -38,6 +37,9 @@ merged_data.drop(columns=['GROUP_MAIL_custom', 'LIB_SERVICE_custom'], inplace=Tr
 # Filtrer les départements C3 avec une barre de progression
 c3_departments = set(departements_c3[0])
 filtered_data = merged_data[merged_data['LIB_SERVICE'].isin(c3_departments)].progress_apply(lambda x: x)
+
+# Assurer que la colonne LIB_SERVICE est toujours remplie
+filtered_data['LIB_SERVICE'] = filtered_data['LIB_SERVICE'].fillna(method='bfill')
 
 # Sélectionner les colonnes nécessaires pour le fichier final
 final_data = filtered_data[['IGG', 'GROUP_MAIL', 'LIB_SERVICE']]
