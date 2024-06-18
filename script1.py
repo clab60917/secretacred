@@ -7,6 +7,11 @@
 6. Générer un nouveau fichier Excel contenant les colonnes IGG, GROUP_MAIL, et LIB_SERVICE pour les utilisateurs C3.
 """
 import pandas as pd
+import pandas as pd
+from tqdm import tqdm
+
+# Initialiser tqdm pour pandas
+tqdm.pandas()
 
 # Lire les fichiers Excel
 people = pd.read_excel('people.xlsx')
@@ -17,13 +22,15 @@ departements_c3 = pd.read_excel('departements.xlsx', header=None)
 custom.rename(columns={'GGI': 'IGG', 'Email': 'GROUP_MAIL'}, inplace=True)
 
 # Fusionner people avec custom pour compléter les informations manquantes
-people_updated = pd.merge(people, custom[['IGG', 'GROUP_MAIL', 'Department']], on='IGG', how='left')
+people_updated = pd.merge(people, custom[['IGG', 'GROUP_MAIL', 'Department']], on='IGG', how='left').progress_apply(lambda x: x)
+
+# Mise à jour des colonnes en utilisant fillna pour appliquer la barre de progression
 people['GROUP_MAIL'] = people['GROUP_MAIL'].fillna(people_updated['GROUP_MAIL'])
 people['Department'] = people['Department'].fillna(people_updated['Department'])
 
-# Filtrer les départements C3
+# Filtrer les départements C3 avec une barre de progression
 c3_departments = set(departements_c3[0])
-people_c3 = people[people['Department'].isin(c3_departments)]
+people_c3 = people[people['Department'].isin(c3_departments)].progress_apply(lambda x: x)
 
 # Sélectionner les colonnes nécessaires pour le fichier final
 final_data = people_c3[['IGG', 'GROUP_MAIL', 'Department', 'LIB_SERVICE']]
