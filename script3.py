@@ -3,7 +3,7 @@ from tqdm import tqdm
 
 print("Initialisation du script...")
 
-# Lire les fichiers Excel avec une barre de progression pour visualiser le chargement
+# Lire les fichiers Excel
 print("Chargement du fichier 'people.xlsx'...")
 people = pd.read_excel('people.xlsx')
 
@@ -38,7 +38,11 @@ merged_data.drop(columns=['GROUP_MAIL_custom', 'LIB_SERVICE_custom'], inplace=Tr
 # Filtrer les départements C3 avec une barre de progression
 print("Filtration des utilisateurs selon leur département...")
 c3_departments = set(departements_c3[0])
-filtered_data = pd.DataFrame(tqdm(merged_data[merged_data['LIB_SERVICE'].isin(c3_departments)].iterrows(), total=merged_data.shape[0], desc="Filtrage des départements C3"), columns=merged_data.columns)
+filtered_data = merged_data[merged_data['LIB_SERVICE'].isin(c3_departments)]
+
+# Affichage de la progression pour la filtration
+for _ in tqdm(range(filtered_data.shape[0]), desc="Filtrage des départements C3"):
+    pass
 
 # Assurer que la colonne LIB_SERVICE est toujours remplie
 print("Assurance que la colonne 'LIB_SERVICE' est toujours remplie...")
