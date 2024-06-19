@@ -2,28 +2,42 @@ import pandas as pd
 from tqdm import tqdm
 from openpyxl import load_workbook
 
-def simulate_read_excel_with_progress(file_path, header='infer'):
+def read_excel_with_progress(file_path, header='infer'):
     # Charger le workbook avec openpyxl pour lire le nombre de lignes
     wb = load_workbook(filename=file_path, read_only=True)
     ws = wb.active
     total_rows = ws.max_row
-    wb.close()
+    
+    # Lire les noms des colonnes depuis la première ligne si header est 0
+    if header == 0:
+        columns = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+        data_start_row = 2
+    else:
+        columns = [f'Column_{i+1}' for i in range(len(next(ws.iter_rows(min_row=1, max_row=1))))]
+        data_start_row = 1
 
-    # Afficher la barre de progression simulée pendant le chargement
+    data = {column: [] for column in columns}
+    
+    # Lire les données avec progression
     pbar = tqdm(total=total_rows, desc=f"Lecture de {file_path}")
-    data = pd.read_excel(file_path, header=header)
-    pbar.update(total_rows)
+    for row in ws.iter_rows(min_row=data_start_row, max_row=ws.max_row):
+        for key, cell in zip(columns, row):
+            data[key].append(cell.value)
+        pbar.update(1)
     pbar.close()
 
-    return data
+    wb.close()
+    
+    # Créer un DataFrame à partir du dictionnaire
+    return pd.DataFrame(data)
 
 print("Initialisation du script...")
 
 # Lire les fichiers Excel avec barres de progression
 print("\n---------------\nLecture des fichiers Excel...\n---------------")
-people = simulate_read_excel_with_progress('people.xlsx', header=0)
-custom = simulate_read_excel_with_progress('custom.xlsx', header=0)
-departements_c3 = simulate_read_excel_with_progress('departements.xlsx', header=None)
+people = read_excel_with_progress('people.xlsx', header=0)
+custom = read_excel_with_progress('custom.xlsx', header=0)
+departements_c3 = read_excel_with_progress('departements.xlsx', header=None)
 
 # Vérification des colonnes des DataFrames
 print("\n---------------\nVérification des colonnes des DataFrames...\n---------------")
