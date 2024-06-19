@@ -1,55 +1,49 @@
 import pandas as pd
 from tqdm import tqdm
+import time
 from openpyxl import load_workbook
 
-def read_excel_with_progress(file_path, header='infer', chunk_size=1000):
-    """Lire un fichier Excel avec une barre de progression."""
-    # Charger le workbook avec openpyxl pour lire le nombre de lignes
+def estimate_reading_time(file_path, num_samples=100):
+    """Estime le temps moyen nécessaire pour lire une ligne dans un fichier Excel."""
     wb = load_workbook(filename=file_path, read_only=True)
     ws = wb.active
     total_rows = ws.max_row
-
-    # Préparer les colonnes et la barre de progression
-    if header == 0:
-        columns = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-        data_start_row = 2
-    else:
-        columns = [f'Column_{i+1}' for i in range(len(next(ws.iter_rows(min_row=1, max_row=1))))]
-        data_start_row = 1
-
-    data = {column: [] for column in columns}
-    pbar = tqdm(total=total_rows, desc=f"Lecture de {file_path}")
-
-    # Lire les données par morceaux
-    for start_row in range(data_start_row, total_rows + 1, chunk_size):
-        end_row = min(start_row + chunk_size - 1, total_rows)
-        for row in ws.iter_rows(min_row=start_row, max_row=end_row):
-            for key, cell in zip(columns, row):
-                data[key].append(cell.value)
-        pbar.update(end_row - start_row + 1)
     
-    pbar.close()
+    start_time = time.time()
+    for row in ws.iter_rows(min_row=2, max_row=min(num_samples+1, total_rows)):
+        pass
+    end_time = time.time()
     wb.close()
+    
+    avg_time_per_line = (end_time - start_time) / num_samples
+    return avg_time_per_line, total_rows
 
-    # Créer un DataFrame à partir du dictionnaire
-    return pd.DataFrame(data)
+def simulate_read_excel_with_progress(file_path, header='infer'):
+    avg_time_per_line, total_rows = estimate_reading_time(file_path)
+    total_time_estimate = avg_time_per_line * total_rows
+    
+    # Afficher la barre de progression simulée pendant le chargement
+    pbar = tqdm(total=total_rows, desc=f"Lecture de {file_path}")
+    data = pd.read_excel(file_path, header=header)
+    for _ in range(total_rows):
+        pbar.update(1)
+        time.sleep(avg_time_per_line / 100)  # Diviser le temps de sommeil pour ne pas ralentir le processus
+    pbar.close()
+
+    return data
 
 print("Initialisation du script...")
 
 # Lire les fichiers Excel avec barres de progression
 print("\n---------------\nLecture des fichiers Excel...\n---------------")
-people = read_excel_with_progress('people.xlsx', header=0)
-custom = read_excel_with_progress('custom.xlsx', header=0)
-departements_c3 = read_excel_with_progress('departements.xlsx', header=None)
+people = simulate_read_excel_with_progress('people.xlsx', header=0)
+custom = simulate_read_excel_with_progress('custom.xlsx', header=0)
+departements_c3 = simulate_read_excel_with_progress('departements.xlsx', header=None)
 
 # Vérification des colonnes des DataFrames
 print("\n---------------\nVérification des colonnes des DataFrames...\n---------------")
 print("Colonnes de 'people':", people.columns.tolist())
 print("Colonnes de 'custom':", custom.columns.tolist())
-
-# Vérification du nombre de lignes lues
-print(f"Nombre de lignes lues dans 'people': {len(people)}")
-print(f"Nombre de lignes lues dans 'custom': {len(custom)}")
 
 # Créer des copies des DataFrames pour les manipulations
 print("\n---------------\nCréation de copies des DataFrames pour manipulation...\n---------------")
