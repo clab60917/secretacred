@@ -1,29 +1,28 @@
 import pandas as pd
-from tqdm import tqdm
-import time
+from alive_progress import alive_bar
+from openpyxl import load_workbook
 
-def fake_progress_bar(description, duration):
-    """Simule une barre de progression pour une durée donnée."""
-    total_steps = 100
-    step_duration = duration / total_steps
-    pbar = tqdm(total=total_steps, desc=description)
-    for _ in range(total_steps):
-        pbar.update(1)
-        time.sleep(step_duration)
-    pbar.close()
+def read_excel_with_progress(file_path, header='infer'):
+    # Charger le workbook avec openpyxl pour lire le nombre de lignes
+    wb = load_workbook(filename=file_path, read_only=True)
+    ws = wb.active
+    total_rows = ws.max_row
+    wb.close()
+
+    # Afficher la barre de progression pendant le chargement
+    with alive_bar(total_rows, title=f"Chargement du fichier '{file_path}'") as bar:
+        data = pd.read_excel(file_path, header=header)
+        for _ in range(total_rows):
+            bar()
+    return data
 
 print("Initialisation du script...")
 
-# Simuler la lecture des fichiers Excel avec des barres de progression
+# Lire les fichiers Excel avec barres de progression
 print("\n---------------\nLecture des fichiers Excel...\n---------------")
-fake_progress_bar("Lecture de people.xlsx", 60)  # Simule 1 minute
-people = pd.read_excel('people.xlsx', header=0)
-
-fake_progress_bar("Lecture de custom.xlsx", 30)  # Simule 30 secondes
-custom = pd.read_excel('custom.xlsx', header=0)
-
-fake_progress_bar("Lecture de departements.xlsx", 5)  # Simule 5 secondes
-departements_c3 = pd.read_excel('departements.xlsx', header=None)
+people = read_excel_with_progress('people.xlsx', header=0)
+custom = read_excel_with_progress('custom.xlsx', header=0)
+departements_c3 = read_excel_with_progress('departements.xlsx', header=None)
 
 # Vérification des colonnes des DataFrames
 print("\n---------------\nVérification des colonnes des DataFrames...\n---------------")
