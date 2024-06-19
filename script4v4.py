@@ -1,18 +1,31 @@
 import pandas as pd
 from tqdm import tqdm
+import time
 from openpyxl import load_workbook
 
-def simulate_read_excel_with_progress(file_path, header='infer'):
-    # Charger le workbook avec openpyxl pour lire le nombre de lignes
+def estimate_reading_time(file_path, num_samples=100):
+    """Estime le temps moyen nécessaire pour lire une ligne dans un fichier Excel."""
     wb = load_workbook(filename=file_path, read_only=True)
     ws = wb.active
     total_rows = ws.max_row
+    
+    start_time = time.time()
+    for row in ws.iter_rows(min_row=2, max_row=min(num_samples+1, total_rows)):
+        pass
+    end_time = time.time()
     wb.close()
+    
+    avg_time_per_line = (end_time - start_time) / num_samples
+    return avg_time_per_line, total_rows
 
+def simulate_read_excel_with_progress(file_path, header='infer'):
+    avg_time_per_line, total_rows = estimate_reading_time(file_path)
+    total_time_estimate = avg_time_per_line * total_rows
+    
     # Afficher la barre de progression simulée pendant le chargement
-    pbar = tqdm(total=total_rows, desc=f"Lecture de {file_path}")
+    pbar = tqdm(total=total_time_estimate, desc=f"Lecture de {file_path}")
     data = pd.read_excel(file_path, header=header)
-    pbar.update(total_rows)
+    pbar.update(total_time_estimate)
     pbar.close()
 
     return data
