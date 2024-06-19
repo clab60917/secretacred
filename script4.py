@@ -1,19 +1,34 @@
 import pandas as pd
 from tqdm import tqdm
+from openpyxl import load_workbook
 
-def read_excel_with_progress(filename, total_steps=30):
-    """ Fonction pour simuler une barre de progression pendant la lecture d'un fichier Excel. """
-    for _ in tqdm(range(total_steps), desc=f"Chargement du fichier '{filename}'"):
+def read_excel_with_progress(filename):
+    """ Fonction pour lire un fichier Excel avec une barre de progression basée sur le nombre de lignes. """
+    # Ouvrir le fichier pour lire le nombre de lignes
+    wb = load_workbook(filename, read_only=True)
+    ws = wb.active
+    max_row = ws.max_row
+    
+    # Préparation de la barre de progression
+    tqdm.pandas(desc=f"Chargement du fichier '{filename}'", total=max_row)
+    
+    # Charger le DataFrame avec pandas en mettant à jour la barre de progression
+    data = pd.read_excel(filename)
+    
+    # Simulation de la barre de progression (puisque la lecture est trop rapide pour voir la progression sur de petits fichiers)
+    for _ in tqdm(range(max_row), desc=f"Chargement du fichier '{filename}'"):
         pass
-    return pd.read_excel(filename)
+
+    wb.close()
+    return data
 
 print("Initialisation du script...")
 
-# Lire les fichiers Excel avec barres de progression simulées
-print("Lecture des fichiers Excel avec barres de progression...")
+# Lire les fichiers Excel avec barres de progression basées sur le nombre de lignes
 people = read_excel_with_progress('people.xlsx')
 custom = read_excel_with_progress('custom.xlsx')
 departements_c3 = read_excel_with_progress('departements.xlsx', header=None)
+
 
 # Créer des copies des DataFrames pour les manipulations
 people_copy = people.copy()
