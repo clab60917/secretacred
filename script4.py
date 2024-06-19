@@ -2,29 +2,40 @@ import pandas as pd
 from tqdm import tqdm
 from openpyxl import load_workbook
 
-def read_excel_with_progress(filename, header='infer'):
-    """ Fonction pour lire un fichier Excel avec une barre de progression basée sur le nombre de lignes. """
-    # Ouvrir le fichier pour lire le nombre de lignes
-    wb = load_workbook(filename, read_only=True)
-    ws = wb.active
-    max_row = ws.max_row
-    
-    # Préparation de la barre de progression
-    pbar = tqdm(total=max_row, desc=f"Chargement du fichier '{filename}'")
-    
-    # Charger le DataFrame avec pandas
-    data = pd.read_excel(filename, header=header)
-    
-    # Mise à jour de la barre de progression à la fin (puisque la lecture est instantanée)
-    pbar.update(max_row)
-    pbar.close()
+def read_excel_with_progress(file_path, header='infer'):
+    # Charger le workbook avec openpyxl pour lire le nombre de lignes
+    wb = load_workbook(filename=file_path, read_only=True)
+    ws = wb.active  # Charger la première feuille active
 
+    # Préparation pour lire les noms des colonnes et les données
+    if header is None:
+        columns = [f'Column_{i+1}' for i in range(len(next(ws.iter_rows(min_row=1, max_row=1))))]
+        data_start_row = 1
+    else:
+        columns = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+        data_start_row = 2
+
+    # Calculer le nombre total de lignes à lire pour la progression
+    row_count = ws.max_row - data_start_row + 1
+
+    # Initialiser un dictionnaire pour recueillir les données
+    data = {column: [] for column in columns}
+
+    # Lire les données avec progression
+    pbar = tqdm(ws.iter_rows(min_row=data_start_row, max_row=ws.max_row), total=row_count, desc=f"Lecture de {file_path}")
+    for row in pbar:
+        for key, cell in zip(columns, row):
+            data[key].append(cell.value)
+
+    # Fermer le workbook
     wb.close()
-    return data
+
+    # Créer un DataFrame à partir du dictionnaire
+    return pd.DataFrame(data, columns=columns)
 
 print("Initialisation du script...")
 
-# Lire les fichiers Excel avec barres de progression basées sur le nombre de lignes
+# Lire les fichiers Excel avec barres de progression
 people = read_excel_with_progress('people.xlsx')
 custom = read_excel_with_progress('custom.xlsx')
 departements_c3 = read_excel_with_progress('departements.xlsx', header=None)
