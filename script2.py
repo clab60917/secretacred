@@ -2,20 +2,26 @@ import pandas as pd
 from tqdm import tqdm
 from openpyxl import load_workbook
 
-def read_excel_with_progress(file_path, header=0):
+def read_excel_with_progress(file_path, header=True):
     # Charger le workbook avec openpyxl
     wb = load_workbook(filename=file_path, read_only=True)
     ws = wb.active  # Charger la première feuille active
 
-    # Lire les noms des colonnes depuis la première ligne si header est 0
-    columns = [cell.value for cell in next(ws.iter_rows(min_row=header+1, max_row=header+1))]
+    if header:
+        # Lire les noms des colonnes depuis la première ligne
+        columns = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+        data_start_row = 2
+    else:
+        # Supposer des noms de colonne génériques si aucune entête n'est présente
+        columns = [f'Column_{i+1}' for i in range(len(next(ws.iter_rows(min_row=1, max_row=1))))]
+        data_start_row = 1
 
     # Initialiser un dictionnaire pour recueillir les données
     data = {column: [] for column in columns}
 
     # Lire les données avec progression
-    row_count = ws.max_row - header  # Calcul du nombre total de lignes à lire pour la progression
-    for row in tqdm(ws.iter_rows(min_row=header+2, max_row=ws.max_row), total=row_count, desc=f"Lecture de {file_path}"):
+    row_count = ws.max_row - data_start_row + 1  # Calcul du nombre total de lignes à lire pour la progression
+    for row in tqdm(ws.iter_rows(min_row=data_start_row, max_row=ws.max_row), total=row_count, desc=f"Lecture de {file_path}"):
         for key, cell in zip(columns, row):
             data[key].append(cell.value)
 
@@ -28,7 +34,7 @@ def read_excel_with_progress(file_path, header=0):
 # Utilisation de la fonction pour lire les fichiers
 people = read_excel_with_progress('people.xlsx')
 custom = read_excel_with_progress('custom.xlsx')
-departements_c3 = read_excel_with_progress('departements.xlsx', header=None)
+departements_c3 = read_excel_with_progress('departements.xlsx', header=False)
 
 # Renommer les colonnes dans 'custom' pour correspondre à celles de 'people'
 custom.rename(columns={'GGI': 'IGG', 'Email': 'GROUP_MAIL', 'Department': 'LIB_SERVICE'}, inplace=True)
@@ -44,7 +50,7 @@ merged_data['LIB_SERVICE'] = merged_data['LIB_SERVICE'].fillna(merged_data['LIB_
 merged_data.drop(columns=['GROUP_MAIL_custom', 'LIB_SERVICE_custom'], inplace=True)
 
 # Filtrer les départements C3
-c3_departments = set(departements_c3[0])
+c3_departments = set(departements_c3['Column_1'])  # Assurez-vous que 'Column_1' est la colonne correcte pour les départements C3
 filtered_data = merged_data[merged_data['LIB_SERVICE'].isin(c3_departments)]
 
 # Sélectionner les colonnes nécessaires pour le fichier final
