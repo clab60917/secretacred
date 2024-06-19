@@ -2,23 +2,34 @@ import pandas as pd
 from tqdm import tqdm
 import time
 
-def simulate_read_excel_with_progress(file_path, header='infer', chunk_size=5000):
-    # Estimation basée sur l'information fournie
-    time_per_chunk = 63 / 205787  # Temps pour lire un chunk
-    total_rows = sum(1 for _ in pd.read_excel(file_path, header=header, usecols=[0], chunksize=chunk_size)) * chunk_size  # Nombre total de lignes
+def estimate_reading_time(file_path, num_samples=100):
+    """Estime le temps moyen nécessaire pour lire une ligne dans un fichier Excel."""
+    wb = load_workbook(filename=file_path, read_only=True)
+    ws = wb.active
+    total_rows = ws.max_row
+    
+    start_time = time.time()
+    for row in ws.iter_rows(min_row=2, max_row=min(num_samples + 1, total_rows)):
+        pass
+    end_time = time.time()
+    wb.close()
+    
+    avg_time_per_line = (end_time - start_time) / num_samples
+    return avg_time_per_line, total_rows
 
-    total_time_estimate = time_per_chunk * (total_rows / chunk_size)
+def simulate_read_excel_with_progress(file_path, header='infer'):
+    # Ajuster les estimations pour un temps de lecture plus rapide
+    avg_time_per_line, total_rows = estimate_reading_time(file_path)
+    total_time_estimate = (avg_time_per_line / 2) * total_rows  # Diviser par 2 le temps des estimations
     
     # Afficher la barre de progression simulée pendant le chargement
     pbar = tqdm(total=total_rows, desc=f"Lecture de {file_path}")
-    chunks = []
-    for chunk in pd.read_excel(file_path, header=header, chunksize=chunk_size):
-        chunks.append(chunk)
-        pbar.update(len(chunk))
-        time.sleep(time_per_chunk / 10)  # Diviser le temps de sommeil pour ne pas ralentir le processus
+    data = pd.read_excel(file_path, header=header)
+    for _ in range(total_rows):
+        pbar.update(1)
+        time.sleep(0.00001)  # Petit temps de sommeil pour simuler la progression sans ralentir le processus
     pbar.close()
 
-    data = pd.concat(chunks, ignore_index=True)
     return data
 
 print("Initialisation du script...")
