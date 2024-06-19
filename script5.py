@@ -2,21 +2,23 @@ import pandas as pd
 from tqdm import tqdm
 import time
 
-def simulate_read_excel_with_progress(file_path, header='infer'):
-    # Estimation basée sur l'information fournie, ajustée pour être plus rapide
-    time_per_line = (63 / 205787) / 2  # Diviser par 2 le temps des estimations
-    total_rows = 205787  # Basé sur l'estimation initiale
-    
-    total_time_estimate = time_per_line * total_rows
+def simulate_read_excel_with_progress(file_path, header='infer', chunk_size=5000):
+    # Estimation basée sur l'information fournie
+    time_per_chunk = 63 / 205787  # Temps pour lire un chunk
+    total_rows = sum(1 for _ in pd.read_excel(file_path, header=header, usecols=[0], chunksize=chunk_size)) * chunk_size  # Nombre total de lignes
+
+    total_time_estimate = time_per_chunk * (total_rows / chunk_size)
     
     # Afficher la barre de progression simulée pendant le chargement
     pbar = tqdm(total=total_rows, desc=f"Lecture de {file_path}")
-    data = pd.read_excel(file_path, header=header)
-    for _ in range(total_rows):
-        pbar.update(1)
-        time.sleep(0.0001)  # Petit temps de sommeil pour simuler la progression sans ralentir le processus
+    chunks = []
+    for chunk in pd.read_excel(file_path, header=header, chunksize=chunk_size):
+        chunks.append(chunk)
+        pbar.update(len(chunk))
+        time.sleep(time_per_chunk / 10)  # Diviser le temps de sommeil pour ne pas ralentir le processus
     pbar.close()
 
+    data = pd.concat(chunks, ignore_index=True)
     return data
 
 print("Initialisation du script...")
