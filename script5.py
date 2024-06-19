@@ -2,32 +2,19 @@ import pandas as pd
 from tqdm import tqdm
 import time
 
-def estimate_reading_time(file_path, num_samples=100):
-    """Estime le temps moyen nécessaire pour lire une ligne dans un fichier Excel."""
-    wb = load_workbook(filename=file_path, read_only=True)
-    ws = wb.active
-    total_rows = ws.max_row
-    
-    start_time = time.time()
-    for row in ws.iter_rows(min_row=2, max_row=min(num_samples + 1, total_rows)):
-        pass
-    end_time = time.time()
-    wb.close()
-    
-    avg_time_per_line = (end_time - start_time) / num_samples
-    return avg_time_per_line, total_rows
-
 def simulate_read_excel_with_progress(file_path, header='infer'):
-    # Ajuster les estimations pour un temps de lecture plus rapide
-    avg_time_per_line, total_rows = estimate_reading_time(file_path)
-    total_time_estimate = (avg_time_per_line / 2) * total_rows  # Diviser par 2 le temps des estimations
+    # Utiliser une estimation fixe pour la lecture
+    total_rows = len(pd.read_excel(file_path, header=header, usecols=[0]))  # Nombre total de lignes
+    avg_time_per_line = 63 / 205787 / 2  # Temps moyen par ligne divisé par 2
+
+    total_time_estimate = avg_time_per_line * total_rows
     
     # Afficher la barre de progression simulée pendant le chargement
     pbar = tqdm(total=total_rows, desc=f"Lecture de {file_path}")
     data = pd.read_excel(file_path, header=header)
     for _ in range(total_rows):
         pbar.update(1)
-        time.sleep(0.00001)  # Petit temps de sommeil pour simuler la progression sans ralentir le processus
+        time.sleep(avg_time_per_line / 10)  # Diviser le temps de sommeil pour ne pas ralentir le processus
     pbar.close()
 
     return data
