@@ -1,42 +1,33 @@
 import pandas as pd
 from tqdm import tqdm
-import time
-from openpyxl import load_workbook
+import os
 
-def estimate_reading_time(file_path, num_samples=100):
-    """Estime le temps moyen nécessaire pour lire une ligne dans un fichier Excel."""
-    wb = load_workbook(filename=file_path, read_only=True)
-    ws = wb.active
-    total_rows = ws.max_row
+def read_excel_with_progress(file_path, header='infer', chunk_size=1000):
+    # Charger le fichier pour compter le nombre total de lignes
+    total_rows = sum(1 for _ in pd.read_excel(file_path, header=header, chunksize=chunk_size))
     
-    start_time = time.time()
-    for row in ws.iter_rows(min_row=2, max_row=min(num_samples+1, total_rows)):
-        pass
-    end_time = time.time()
-    wb.close()
+    # Lire le fichier en utilisant chunksize pour mettre à jour la barre de progression
+    chunks = []
+    pbar = tqdm(total=total_rows, desc=f"Lecture de {file_path}")
     
-    avg_time_per_line = (end_time - start_time) / num_samples
-    return avg_time_per_line, total_rows
-
-def simulate_read_excel_with_progress(file_path, header='infer'):
-    avg_time_per_line, total_rows = estimate_reading_time(file_path)
-    total_time_estimate = avg_time_per_line * total_rows
+    for chunk in pd.read_excel(file_path, header=header, chunksize=chunk_size):
+        chunks.append(chunk)
+        pbar.update(len(chunk))
     
-    # Afficher la barre de progression simulée pendant le chargement
-    pbar = tqdm(total=total_time_estimate, desc=f"Lecture de {file_path}")
-    data = pd.read_excel(file_path, header=header)
-    pbar.update(total_time_estimate)
     pbar.close()
-
+    
+    # Combiner tous les chunks dans un seul DataFrame
+    data = pd.concat(chunks, ignore_index=True)
+    
     return data
 
 print("Initialisation du script...")
 
 # Lire les fichiers Excel avec barres de progression
 print("\n---------------\nLecture des fichiers Excel...\n---------------")
-people = simulate_read_excel_with_progress('people.xlsx', header=0)
-custom = simulate_read_excel_with_progress('custom.xlsx', header=0)
-departements_c3 = simulate_read_excel_with_progress('departements.xlsx', header=None)
+people = read_excel_with_progress('people.xlsx', header=0)
+custom = read_excel_with_progress('custom.xlsx', header=0)
+departements_c3 = read_excel_with_progress('departements.xlsx', header=None)
 
 # Vérification des colonnes des DataFrames
 print("\n---------------\nVérification des colonnes des DataFrames...\n---------------")
