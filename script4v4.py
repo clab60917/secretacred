@@ -1,25 +1,38 @@
 import pandas as pd
 from tqdm import tqdm
-import os
+from openpyxl import load_workbook
 
 def read_excel_with_progress(file_path, header='infer', chunk_size=1000):
-    # Charger le fichier pour compter le nombre total de lignes
-    total_rows = sum(1 for _ in pd.read_excel(file_path, header=header, chunksize=chunk_size))
-    
-    # Lire le fichier en utilisant chunksize pour mettre à jour la barre de progression
-    chunks = []
+    """Lire un fichier Excel avec une barre de progression."""
+    # Charger le workbook avec openpyxl pour lire le nombre de lignes
+    wb = load_workbook(filename=file_path, read_only=True)
+    ws = wb.active
+    total_rows = ws.max_row
+
+    # Préparer les colonnes et la barre de progression
+    if header == 0:
+        columns = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+        data_start_row = 2
+    else:
+        columns = [f'Column_{i+1}' for i in range(len(next(ws.iter_rows(min_row=1, max_row=1))))]
+        data_start_row = 1
+
+    data = {column: [] for column in columns}
     pbar = tqdm(total=total_rows, desc=f"Lecture de {file_path}")
-    
-    for chunk in pd.read_excel(file_path, header=header, chunksize=chunk_size):
-        chunks.append(chunk)
-        pbar.update(len(chunk))
+
+    # Lire les données par morceaux
+    for start_row in range(data_start_row, total_rows + 1, chunk_size):
+        end_row = min(start_row + chunk_size - 1, total_rows)
+        for row in ws.iter_rows(min_row=start_row, max_row=end_row):
+            for key, cell in zip(columns, row):
+                data[key].append(cell.value)
+        pbar.update(end_row - start_row + 1)
     
     pbar.close()
-    
-    # Combiner tous les chunks dans un seul DataFrame
-    data = pd.concat(chunks, ignore_index=True)
-    
-    return data
+    wb.close()
+
+    # Créer un DataFrame à partir du dictionnaire
+    return pd.DataFrame(data)
 
 print("Initialisation du script...")
 
@@ -33,6 +46,10 @@ departements_c3 = read_excel_with_progress('departements.xlsx', header=None)
 print("\n---------------\nVérification des colonnes des DataFrames...\n---------------")
 print("Colonnes de 'people':", people.columns.tolist())
 print("Colonnes de 'custom':", custom.columns.tolist())
+
+# Vérification du nombre de lignes lues
+print(f"Nombre de lignes lues dans 'people': {len(people)}")
+print(f"Nombre de lignes lues dans 'custom': {len(custom)}")
 
 # Créer des copies des DataFrames pour les manipulations
 print("\n---------------\nCréation de copies des DataFrames pour manipulation...\n---------------")
