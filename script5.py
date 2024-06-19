@@ -2,30 +2,28 @@ import pandas as pd
 from tqdm import tqdm
 import time
 
-def simulate_read_excel_with_progress(file_path, header='infer'):
-    # Utiliser une estimation fixe pour la lecture
-    total_rows = len(pd.read_excel(file_path, header=header, usecols=[0]))  # Nombre total de lignes
-    avg_time_per_line = 63 / 205787 / 2  # Temps moyen par ligne divisé par 2
-
-    total_time_estimate = avg_time_per_line * total_rows
-    
-    # Afficher la barre de progression simulée pendant le chargement
-    pbar = tqdm(total=total_rows, desc=f"Lecture de {file_path}")
-    data = pd.read_excel(file_path, header=header)
-    for _ in range(total_rows):
+def fake_progress_bar(description, duration):
+    """Simule une barre de progression pour une durée donnée."""
+    total_steps = 100
+    step_duration = duration / total_steps
+    pbar = tqdm(total=total_steps, desc=description)
+    for _ in range(total_steps):
         pbar.update(1)
-        time.sleep(avg_time_per_line / 10)  # Diviser le temps de sommeil pour ne pas ralentir le processus
+        time.sleep(step_duration)
     pbar.close()
-
-    return data
 
 print("Initialisation du script...")
 
-# Lire les fichiers Excel avec barres de progression
+# Simuler la lecture des fichiers Excel avec des barres de progression
 print("\n---------------\nLecture des fichiers Excel...\n---------------")
-people = simulate_read_excel_with_progress('people.xlsx', header=0)
-custom = simulate_read_excel_with_progress('custom.xlsx', header=0)
-departements_c3 = simulate_read_excel_with_progress('departements.xlsx', header=None)
+fake_progress_bar("Lecture de people.xlsx", 60)  # Simule 1 minute
+people = pd.read_excel('people.xlsx', header=0)
+
+fake_progress_bar("Lecture de custom.xlsx", 30)  # Simule 30 secondes
+custom = pd.read_excel('custom.xlsx', header=0)
+
+fake_progress_bar("Lecture de departements.xlsx", 5)  # Simule 5 secondes
+departements_c3 = pd.read_excel('departements.xlsx', header=None)
 
 # Vérification des colonnes des DataFrames
 print("\n---------------\nVérification des colonnes des DataFrames...\n---------------")
