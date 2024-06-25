@@ -33,6 +33,10 @@ people = read_excel_with_progress('people.xlsx', header=0)
 custom = read_excel_with_progress('custom.xlsx', header=0)
 departements_c3 = read_excel_with_progress('departements.xlsx', sheet_name='LIST C3 DPT ONLY INTERNALS', header=0)
 
+# Vérifier la structure des données du fichier départements
+print("\n---------------\nVérification des données du fichier départements...\n---------------")
+print(departements_c3.head())
+
 # Nettoyer les départements C3 et créer un set des départements C3
 departements_c3_clean = departements_c3.iloc[:, 0].apply(clean_department)
 c3_departments = set(departements_c3_clean)
@@ -77,6 +81,7 @@ def check_department(row):
         return row['LIB_CENTRE_ACTIVITE'] in c3_departments
 
 # Appliquer le filtre
+print("\n---------------\nFiltrage des données...\n---------------")
 filtered_data = merged_data[merged_data.apply(check_department, axis=1)].copy()
 
 # Assurer que la colonne LIB_SERVICE est toujours remplie
