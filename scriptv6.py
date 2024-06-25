@@ -1,20 +1,17 @@
 import pandas as pd
-from alive_progress import alive_bar, config_handler
+from alive_progress import alive_bar
 from openpyxl import load_workbook
 
-def read_excel_with_progress(file_path, sheet_name=None, header='infer'):
+def read_excel_with_progress(file_path, header='infer'):
     # Charger le workbook avec openpyxl pour lire le nombre de lignes
     wb = load_workbook(filename=file_path, read_only=True)
-    ws = wb[sheet_name] if sheet_name else wb.active
+    ws = wb.active
     total_rows = ws.max_row
     wb.close()
 
-    # Configurer la barre de progression
-    config_handler.set_global(spinner='dots_waves', bar='classic', title=f"Chargement du fichier '{file_path}'", stats='(ETA: {eta}s)')
-
     # Afficher la barre de progression pendant le chargement
     with alive_bar(total_rows, title=f"Chargement du fichier '{file_path}'") as bar:
-        data = pd.read_excel(file_path, sheet_name=sheet_name, header=header)
+        data = pd.read_excel(file_path, header=header)
         for _ in range(total_rows):
             bar()
     return data
@@ -31,7 +28,7 @@ print("Initialisation du script...")
 print("\n---------------\nLecture des fichiers Excel...\n---------------")
 people = read_excel_with_progress('people.xlsx', header=0)
 custom = read_excel_with_progress('custom.xlsx', header=0)
-departements_c3 = read_excel_with_progress('departements.xlsx', sheet_name='LIST C3 DPT ONLY INTERNALS', header=None)
+departements_c3 = read_excel_with_progress('departements.xlsx', header=None)
 
 # Nettoyer les départements C3 et créer un set des départements C3
 departements_c3_clean = departements_c3.iloc[5:, 0].apply(clean_department)  # Commence à partir de la ligne 6
@@ -49,7 +46,11 @@ custom_copy = custom.copy()
 
 # Renommer les colonnes dans 'custom_copy'
 print("\n---------------\nRenommage des colonnes dans 'custom' pour correspondre à celles de 'people'...\n---------------")
-custom_copy.rename(columns={'GGI': 'IGG', 'Email': 'GROUP_MAIL', 'Department': 'LIB_SERVICE'}, inplace=True)
+if 'GGI' in custom_copy.columns and 'Email' in custom_copy.columns and 'Department' in custom_copy.columns:
+    custom_copy.rename(columns={'GGI': 'IGG', 'Email': 'GROUP_MAIL', 'Department': 'LIB_SERVICE'}, inplace=True)
+    print("Colonnes après renommage dans 'custom':", custom_copy.columns.tolist())
+else:
+    raise KeyError("Les colonnes attendues 'GGI', 'Email' et 'Department' ne sont pas présentes dans 'custom'.")
 
 # Fusionner people_copy avec custom_copy pour compléter les informations manquantes
 print("\n---------------\nFusion des DataFrames...\n---------------")
