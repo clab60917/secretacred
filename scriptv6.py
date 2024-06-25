@@ -2,7 +2,7 @@ import pandas as pd
 from alive_progress import alive_bar, config_handler
 from openpyxl import load_workbook
 
-def read_excel_with_progress(file_path, sheet_name=None, header='infer', start_row=1):
+def read_excel_with_progress(file_path, sheet_name=None, header='infer'):
     # Charger le workbook avec openpyxl pour lire le nombre de lignes
     wb = load_workbook(filename=file_path, read_only=True)
     ws = wb[sheet_name] if sheet_name else wb.active
@@ -13,9 +13,9 @@ def read_excel_with_progress(file_path, sheet_name=None, header='infer', start_r
     config_handler.set_global(spinner='dots_waves', bar='classic', title=f"Chargement du fichier '{file_path}'", stats='(ETA: {eta}s)')
 
     # Afficher la barre de progression pendant le chargement
-    with alive_bar(total_rows - start_row + 1, title=f"Chargement du fichier '{file_path}'") as bar:
-        data = pd.read_excel(file_path, sheet_name=sheet_name, header=header, skiprows=start_row - 1)
-        for _ in range(total_rows - start_row + 1):
+    with alive_bar(total_rows, title=f"Chargement du fichier '{file_path}'") as bar:
+        data = pd.read_excel(file_path, sheet_name=sheet_name, header=header)
+        for _ in range(total_rows):
             bar()
     return data
 
@@ -31,14 +31,10 @@ print("Initialisation du script...")
 print("\n---------------\nLecture des fichiers Excel...\n---------------")
 people = read_excel_with_progress('people.xlsx', header=0)
 custom = read_excel_with_progress('custom.xlsx', header=0)
-departements_c3 = read_excel_with_progress('departements.xlsx', sheet_name='LIST C3 DPT ONLY INTERNALS', header=None, start_row=6)
-
-# Vérifier la structure des données du fichier départements
-print("\n---------------\nVérification des données du fichier départements...\n---------------")
-print(departements_c3.head())
+departements_c3 = read_excel_with_progress('departements.xlsx', sheet_name='LIST C3 DPT ONLY INTERNALS', header=None)
 
 # Nettoyer les départements C3 et créer un set des départements C3
-departements_c3_clean = departements_c3.iloc[:, 0].apply(clean_department)
+departements_c3_clean = departements_c3.iloc[5:, 0].apply(clean_department)  # Commence à partir de la ligne 6
 c3_departments = set(departements_c3_clean)
 
 # Vérification des colonnes des DataFrames
@@ -53,11 +49,7 @@ custom_copy = custom.copy()
 
 # Renommer les colonnes dans 'custom_copy'
 print("\n---------------\nRenommage des colonnes dans 'custom' pour correspondre à celles de 'people'...\n---------------")
-if 'GGI' in custom_copy.columns and 'Email' in custom_copy.columns and 'Department' in custom_copy.columns:
-    custom_copy.rename(columns={'GGI': 'IGG', 'Email': 'GROUP_MAIL', 'Department': 'LIB_SERVICE'}, inplace=True)
-    print("Colonnes après renommage dans 'custom':", custom_copy.columns.tolist())
-else:
-    raise KeyError("Les colonnes attendues 'GGI', 'Email' et 'Department' ne sont pas présentes dans 'custom'.")
+custom_copy.rename(columns={'GGI': 'IGG', 'Email': 'GROUP_MAIL', 'Department': 'LIB_SERVICE'}, inplace=True)
 
 # Fusionner people_copy avec custom_copy pour compléter les informations manquantes
 print("\n---------------\nFusion des DataFrames...\n---------------")
@@ -78,7 +70,7 @@ def check_department(row):
     if '/' in lib_service:
         return clean_department(lib_service) in c3_departments
     else:
-        return row['LIB_CENTRE_ACTIVITE'] in c3_departments
+        return str(row['LIB_CENTRE_ACTIVITE']) in c3_departments
 
 # Appliquer le filtre
 print("\n---------------\nFiltrage des données...\n---------------")
