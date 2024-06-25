@@ -10,7 +10,7 @@ def read_excel_with_progress(file_path, sheet_name=None, header='infer', start_r
     wb.close()
 
     # Configurer la barre de progression
-    config_handler.set_global(spinner='dots_waves', bar='classic', title=f"Chargement du fichier '{file_path}'", stats='(ETA: {eta}s)')  # Choisir une configuration globale
+    config_handler.set_global(spinner='dots_waves', bar='classic', title=f"Chargement du fichier '{file_path}'", stats='(ETA: {eta}s)')
 
     # Afficher la barre de progression pendant le chargement
     with alive_bar(total_rows - start_row + 1, title=f"Chargement du fichier '{file_path}'") as bar:
