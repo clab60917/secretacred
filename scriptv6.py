@@ -64,12 +64,19 @@ c3_departments = set(departements_c3.iloc[:, 0])
 
 # Nouveau filtre pour vérifier la colonne LIB_CENTRE_ACTIVITE si LIB_SERVICE ne contient pas de /
 def check_department(row):
-    if '/' in str(row['LIB_SERVICE']):
-        return row['LIB_SERVICE'] in c3_departments
+    lib_service = str(row['LIB_SERVICE'])
+    if '/' in lib_service:
+        return lib_service in c3_departments
     else:
         return row['LIB_CENTRE_ACTIVITE'] in c3_departments
 
+# Appliquer le filtre et afficher les départements non valides pour debug
 filtered_data = merged_data[merged_data.apply(check_department, axis=1)].copy()
+
+# Vérifier et afficher les départements non valides dans l'output pour debug
+invalid_departments = filtered_data[~filtered_data['LIB_SERVICE'].isin(c3_departments) & ~filtered_data['LIB_CENTRE_ACTIVITE'].isin(c3_departments)]
+if not invalid_departments.empty:
+    print("Départements non valides dans l'output:", invalid_departments[['LIB_SERVICE', 'LIB_CENTRE_ACTIVITE']])
 
 # Assurer que la colonne LIB_SERVICE est toujours remplie
 print("\n---------------\nAssurer que la colonne 'LIB_SERVICE' est toujours remplie...\n---------------")
