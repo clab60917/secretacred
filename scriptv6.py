@@ -2,7 +2,7 @@ import pandas as pd
 from alive_progress import alive_bar, config_handler
 from openpyxl import load_workbook
 
-def read_excel_with_progress(file_path, sheet_name=None, header='infer'):
+def read_excel_with_progress(file_path, sheet_name=None, header='infer', start_row=1):
     # Charger le workbook avec openpyxl pour lire le nombre de lignes
     wb = load_workbook(filename=file_path, read_only=True)
     ws = wb[sheet_name] if sheet_name else wb.active
@@ -13,9 +13,9 @@ def read_excel_with_progress(file_path, sheet_name=None, header='infer'):
     config_handler.set_global(spinner='dots_waves', bar='classic', title=f"Chargement du fichier '{file_path}'", stats='(ETA: {eta}s)')  # Choisir une configuration globale
 
     # Afficher la barre de progression pendant le chargement
-    with alive_bar(total_rows, title=f"Chargement du fichier '{file_path}'") as bar:
-        data = pd.read_excel(file_path, sheet_name=sheet_name, header=header)
-        for _ in range(total_rows):
+    with alive_bar(total_rows - start_row + 1, title=f"Chargement du fichier '{file_path}'") as bar:
+        data = pd.read_excel(file_path, sheet_name=sheet_name, header=header, skiprows=start_row - 1)
+        for _ in range(total_rows - start_row + 1):
             bar()
     return data
 
@@ -31,7 +31,7 @@ print("Initialisation du script...")
 print("\n---------------\nLecture des fichiers Excel...\n---------------")
 people = read_excel_with_progress('people.xlsx', header=0)
 custom = read_excel_with_progress('custom.xlsx', header=0)
-departements_c3 = read_excel_with_progress('departements.xlsx', sheet_name='LIST C3 DPT ONLY INTERNALS', header=0)
+departements_c3 = read_excel_with_progress('departements.xlsx', sheet_name='LIST C3 DPT ONLY INTERNALS', header=None, start_row=6)
 
 # Vérifier la structure des données du fichier départements
 print("\n---------------\nVérification des données du fichier départements...\n---------------")
