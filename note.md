@@ -1,4 +1,4 @@
-Voici la liste des actions effectuées par le script sous forme de bullet points :
+Voici la liste des actions effectuées par le script :
 
 - Initialisation du script.
 - Lecture du fichier `people.xlsx` avec une barre de progression.
