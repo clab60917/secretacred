@@ -46,11 +46,7 @@ custom_copy = custom.copy()
 
 # Renommer les colonnes dans 'custom_copy'
 print("\n---------------\nRenommage des colonnes dans 'custom' pour correspondre à celles de 'people'...\n---------------")
-if 'GGI' in custom_copy.columns and 'Email' in custom_copy.columns and 'Department' in custom_copy.columns:
-    custom_copy.rename(columns={'GGI': 'IGG', 'Email': 'GROUP_MAIL', 'Department': 'LIB_SERVICE'}, inplace=True)
-    print("Colonnes après renommage dans 'custom':", custom_copy.columns.tolist())
-else:
-    raise KeyError("Les colonnes attendues 'GGI', 'Email' et 'Department' ne sont pas présentes dans 'custom'.")
+custom_copy.rename(columns={'GGI': 'IGG', 'Email': 'GROUP_MAIL', 'Department': 'LIB_SERVICE'}, inplace=True)
 
 # Fusionner people_copy avec custom_copy pour compléter les informations manquantes
 print("\n---------------\nFusion des DataFrames...\n---------------")
@@ -66,24 +62,28 @@ print("\n---------------\nSuppression des colonnes temporaires après la fusion.
 merged_data.drop(columns=['GROUP_MAIL_custom', 'LIB_SERVICE_custom'], inplace=True)
 
 # Nouveau filtre pour vérifier la colonne LIB_CENTRE_ACTIVITE si LIB_SERVICE ne contient pas de /
-def check_department(row):
+def get_c3_department(row):
     lib_service = str(row['LIB_SERVICE'])
     if '/' in lib_service:
-        return clean_department(lib_service) in c3_departments
+        department = clean_department(lib_service)
+        if department in c3_departments:
+            return department
     else:
-        return str(row['LIB_CENTRE_ACTIVITE']) in c3_departments
+        department = clean_department(str(row['LIB_CENTRE_ACTIVITE']))
+        if department in c3_departments:
+            return department
+    return None
 
-# Appliquer le filtre
+# Appliquer le filtre et récupérer le département C3
 print("\n---------------\nFiltrage des données...\n---------------")
-filtered_data = merged_data[merged_data.apply(check_department, axis=1)].copy()
+merged_data['DEPARTEMENT'] = merged_data.apply(get_c3_department, axis=1)
 
-# Assurer que la colonne LIB_SERVICE est toujours remplie
-print("\n---------------\nAssurer que la colonne 'LIB_SERVICE' est toujours remplie...\n---------------")
-filtered_data.loc[:, 'LIB_SERVICE'] = filtered_data['LIB_SERVICE'].ffill()
+# Filtrer les utilisateurs C3
+filtered_data = merged_data[merged_data['DEPARTEMENT'].notna()].copy()
 
 # Sélectionner les colonnes nécessaires pour le fichier final
 print("\n---------------\nSélection des colonnes finales pour l'export...\n---------------")
-final_data = filtered_data[['IGG', 'GROUP_MAIL', 'LIB_SERVICE']]
+final_data = filtered_data[['IGG', 'GROUP_MAIL', 'DEPARTEMENT']]
 
 # Sauvegarder le fichier final
 print("\n---------------\nSauvegarde du fichier final 'C3_accredited_users.xlsx'...\n---------------")
