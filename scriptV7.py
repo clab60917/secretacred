@@ -80,8 +80,8 @@ print("Premières lignes de 'merged_data':\n", merged_data.head())
 
 # Nouveau filtre pour vérifier la colonne LIB_CENTRE_ACTIVITE si LIB_SERVICE ne contient pas de /
 def get_c3_department(row):
-    lib_service = str(row['LIB_SERVICE'])
-    lib_centre_activite = str(row['LIB_CENTRE_ACTIVITE'])
+    lib_service = str(row['LIB_SERVICE']) if pd.notna(row['LIB_SERVICE']) else ''
+    lib_centre_activite = str(row['LIB_CENTRE_ACTIVITE']) if pd.notna(row['LIB_CENTRE_ACTIVITE']) else ''
     for dept in c3_departments:
         if lib_service.startswith(dept) or lib_centre_activite.startswith(dept):
             return dept
