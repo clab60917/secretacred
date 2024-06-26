@@ -82,12 +82,14 @@ print("Premières lignes de 'merged_data':\n", merged_data.head())
 def get_c3_department(row):
     lib_service = str(row['LIB_SERVICE']) if pd.notna(row['LIB_SERVICE']) else ''
     lib_centre_activite = str(row['LIB_CENTRE_ACTIVITE']) if pd.notna(row['LIB_CENTRE_ACTIVITE']) else ''
+    print(f"lib_service: {lib_service}, lib_centre_activite: {lib_centre_activite}")
     for dept in c3_departments:
         if lib_service.startswith(dept) or lib_centre_activite.startswith(dept):
             return dept
     return None
 
 # Appliquer le filtre et récupérer le département C3
+print("\n---------------\nApplication du filtre des départements C3...\n---------------")
 merged_data['DEPARTEMENT'] = merged_data.apply(get_c3_department, axis=1)
 
 # Filtrer les utilisateurs C3
