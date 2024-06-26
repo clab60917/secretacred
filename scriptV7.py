@@ -26,8 +26,8 @@ print("Initialisation du script...")
 
 # Lire les fichiers Excel avec barres de progression
 print("\n---------------\nLecture des fichiers Excel...\n---------------")
-people = read_excel_with_progress('people.xlsx', sheet_name=0, header=0)
-custom = read_excel_with_progress('custom.xlsx', sheet_name=0, header=0)
+people = read_excel_with_progress('people.xlsx', header=0)
+custom = read_excel_with_progress('custom.xlsx', header=0)
 departements_c3 = read_excel_with_progress('departements.xlsx', sheet_name='LIST C3 DPT ONLY INTERNALS', header=None)
 nominative_users = read_excel_with_progress('departements.xlsx', sheet_name='NOMINATIVE USERS + ORIGINE', header=0)
 elr_habilite = read_excel_with_progress('departements.xlsx', sheet_name='LIST OF ELR', header=0)
@@ -82,7 +82,6 @@ print("Premières lignes de 'merged_data':\n", merged_data.head())
 def get_c3_department(row):
     lib_service = str(row['LIB_SERVICE']) if pd.notna(row['LIB_SERVICE']) else ''
     lib_centre_activite = str(row['LIB_CENTRE_ACTIVITE']) if pd.notna(row['LIB_CENTRE_ACTIVITE']) else ''
-    print(f"lib_service: {lib_service}, lib_centre_activite: {lib_centre_activite}")
     for dept in c3_departments:
         if lib_service.startswith(dept) or lib_centre_activite.startswith(dept):
             return dept
