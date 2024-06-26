@@ -83,7 +83,7 @@ def get_c3_department(row):
     lib_service = str(row['LIB_SERVICE']) if pd.notna(row['LIB_SERVICE']) else ''
     lib_centre_activite = str(row['LIB_CENTRE_ACTIVITE']) if pd.notna(row['LIB_CENTRE_ACTIVITE']) else ''
     for dept in c3_departments:
-        if lib_service.startswith(dept) or lib_centre_activite.startswith(dept):
+        if isinstance(dept, str) and (lib_service.startswith(dept) or lib_centre_activite.startswith(dept)):
             return dept
     return None
 
