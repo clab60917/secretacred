@@ -32,6 +32,13 @@ departements_c3 = read_excel_with_progress('departements.xlsx', sheet_name='LIST
 nominative_users = read_excel_with_progress('departements.xlsx', sheet_name='NOMINATIVE USERS + ORIGINE', header=0)
 elr_habilite = read_excel_with_progress('departements.xlsx', sheet_name='LIST OF ELR', header=0)
 
+# Vérification des types de données pour s'assurer qu'ils sont bien des DataFrames
+assert isinstance(people, pd.DataFrame), f"Expected DataFrame but got {type(people)}"
+assert isinstance(custom, pd.DataFrame), f"Expected DataFrame but got {type(custom)}"
+assert isinstance(departements_c3, pd.DataFrame), f"Expected DataFrame but got {type(departements_c3)}"
+assert isinstance(nominative_users, pd.DataFrame), f"Expected DataFrame but got {type(nominative_users)}"
+assert isinstance(elr_habilite, pd.DataFrame), f"Expected DataFrame but got {type(elr_habilite)}"
+
 # Vérification des colonnes des DataFrames
 print("\n---------------\nVérification des colonnes des DataFrames...\n---------------")
 print("Colonnes de 'people':", people.columns.tolist())
@@ -80,6 +87,7 @@ def get_c3_department(row):
     return None
 
 # Appliquer le filtre et récupérer le département C3
+print("\n---------------\nApplication du filtre des départements C3...\n---------------")
 merged_data['DEPARTEMENT'] = merged_data.apply(get_c3_department, axis=1)
 
 # Filtrer les utilisateurs C3
