@@ -81,14 +81,10 @@ print("Premières lignes de 'merged_data':\n", merged_data.head())
 # Nouveau filtre pour vérifier la colonne LIB_CENTRE_ACTIVITE si LIB_SERVICE ne contient pas de /
 def get_c3_department(row):
     lib_service = str(row['LIB_SERVICE'])
-    if '/' in lib_service:
-        department = clean_department(lib_service)
-        if department in c3_departments:
-            return department
-    else:
-        department = clean_department(str(row['LIB_CENTRE_ACTIVITE']))
-        if department in c3_departments:
-            return department
+    lib_centre_activite = str(row['LIB_CENTRE_ACTIVITE'])
+    for dept in c3_departments:
+        if lib_service.startswith(dept) or lib_centre_activite.startswith(dept):
+            return dept
     return None
 
 # Appliquer le filtre et récupérer le département C3
