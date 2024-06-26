@@ -28,9 +28,9 @@ print("Initialisation du script...")
 print("\n---------------\nLecture des fichiers Excel...\n---------------")
 people = read_excel_with_progress('people.xlsx', header=0)
 custom = read_excel_with_progress('custom.xlsx', header=0)
-departements_c3 = read_excel_with_progress('departements.xlsx', header=None, sheet_name='LIST C3 DPT ONLY INTERNALS')
-nominative_users = read_excel_with_progress('departements.xlsx', header=0, sheet_name='NOMINATIVE USERS + ORIGINE')
-elr_habilite = read_excel_with_progress('departements.xlsx', header=0, sheet_name='LIST OF ELR')
+departements_c3 = read_excel_with_progress('departements.xlsx', sheet_name='LIST C3 DPT ONLY INTERNALS', header=None)
+nominative_users = read_excel_with_progress('departements.xlsx', sheet_name='NOMINATIVE USERS + ORIGINE', header=0)
+elr_habilite = read_excel_with_progress('departements.xlsx', sheet_name='LIST OF ELR', header=0)
 
 # Afficher les noms des colonnes pour vérification
 print("\n---------------\nNoms des colonnes dans les fichiers Excel...\n---------------")
