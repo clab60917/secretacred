@@ -32,12 +32,17 @@ departements_c3 = read_excel_with_progress('departements.xlsx', header=None, she
 nominative_users = read_excel_with_progress('departements.xlsx', header=0, sheet_name='NOMINATIVE USERS + ORIGINE')
 elr_habilite = read_excel_with_progress('departements.xlsx', header=0, sheet_name='LIST OF ELR')
 
+# Afficher les noms des colonnes pour vérification
+print("\n---------------\nNoms des colonnes dans les fichiers Excel...\n---------------")
+print("Colonnes de 'NOMINATIVE USERS + ORIGINE':", nominative_users.columns.tolist())
+print("Colonnes de 'LIST OF ELR':", elr_habilite.columns.tolist())
+
 # Nettoyer les départements C3 et créer un set des départements C3
 departements_c3_clean = departements_c3.iloc[5:, 0].apply(clean_department)  # Commence à partir de la ligne 6
 c3_departments = set(departements_c3_clean)
 
 # Créer des sets pour les filtres supplémentaires
-nominative_emails = set(nominative_users['MAIL'])
+nominative_emails = set(nominative_users['Mail'])
 elr_habilite_c3 = set(elr_habilite['ELR habilité au C3'])
 
 # Vérification des colonnes des DataFrames
