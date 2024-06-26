@@ -26,9 +26,9 @@ print("Initialisation du script...")
 
 # Lire les fichiers Excel avec barres de progression
 print("\n---------------\nLecture des fichiers Excel...\n---------------")
-people = read_excel_with_progress('people.xlsx', header=0)
+people = read_excel_with_progress('people.xlsx', sheet_name=0, header=0)
 print(f"'people.xlsx' est de type {type(people)}")
-custom = read_excel_with_progress('custom.xlsx', header=0)
+custom = read_excel_with_progress('custom.xlsx', sheet_name=0, header=0)
 print(f"'custom.xlsx' est de type {type(custom)}")
 departements_c3 = read_excel_with_progress('departements.xlsx', sheet_name='LIST C3 DPT ONLY INTERNALS', header=None)
 print(f"'departements.xlsx' (LIST C3 DPT ONLY INTERNALS) est de type {type(departements_c3)}")
