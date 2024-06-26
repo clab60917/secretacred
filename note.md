@@ -1,0 +1,26 @@
+Voici la liste des actions effectuées par le script sous forme de bullet points :
+
+- Initialisation du script.
+- Lecture du fichier `people.xlsx` avec une barre de progression.
+- Lecture du fichier `custom.xlsx` avec une barre de progression.
+- Lecture de la feuille `LIST C3 DPT ONLY INTERNALS` du fichier `departements.xlsx` avec une barre de progression.
+- Lecture de la feuille `NOMINATIVE USERS + ORIGINE` du fichier `departements.xlsx` avec une barre de progression.
+- Lecture de la feuille `LIST OF ELR` du fichier `departements.xlsx` avec une barre de progression.
+- Affichage des types des objets pour chaque fichier lu afin de vérifier que ce sont des DataFrames.
+- Affichage des noms des colonnes de chaque DataFrame pour vérification.
+- Affichage des premières lignes de chaque DataFrame pour aperçu.
+- Nettoyage des annotations des départements dans la feuille `LIST C3 DPT ONLY INTERNALS` et création d'un set des départements C3.
+- Création de sets pour les filtres supplémentaires à partir des colonnes `Mail` de `NOMINATIVE USERS + ORIGINE` et `ELR habilité au C3` de `LIST OF ELR`.
+- Création de copies des DataFrames `people` et `custom` pour manipulation.
+- Renommage des colonnes dans `custom` pour correspondre à celles de `people`.
+- Fusion de `people_copy` avec `custom_copy` pour compléter les informations manquantes.
+- Utilisation de `fillna` pour combler les informations manquantes dans les colonnes `GROUP_MAIL` et `LIB_SERVICE`.
+- Suppression des colonnes temporaires après la fusion.
+- Affichage des premières lignes du DataFrame fusionné `merged_data`.
+- Application du filtre pour vérifier les départements C3 en utilisant les colonnes `LIB_SERVICE` et `LIB_CENTRE_ACTIVITE`.
+- Affichage des premières lignes du DataFrame `filtered_data` après application du filtre des départements C3.
+- Application des filtres supplémentaires basés sur les emails nominatives et les ELR habilités au C3.
+- Affichage des premières lignes du DataFrame `filtered_data` après application des filtres supplémentaires.
+- Sélection des colonnes nécessaires pour le fichier final (`IGG`, `GROUP_MAIL`, `DEPARTEMENT`).
+- Sauvegarde du fichier final `C3_accredited_users.xlsx`.
+- Affichage d'un message de confirmation indiquant que le fichier final a été créé avec succès et que le processus est terminé.
