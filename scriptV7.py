@@ -26,26 +26,27 @@ print("Initialisation du script...")
 
 # Lire les fichiers Excel avec barres de progression
 print("\n---------------\nLecture des fichiers Excel...\n---------------")
-people = read_excel_with_progress('people.xlsx', header=0)
-custom = read_excel_with_progress('custom.xlsx', header=0)
+people = read_excel_with_progress('people.xlsx', sheet_name=0, header=0)
+custom = read_excel_with_progress('custom.xlsx', sheet_name=0, header=0)
 departements_c3 = read_excel_with_progress('departements.xlsx', sheet_name='LIST C3 DPT ONLY INTERNALS', header=None)
 nominative_users = read_excel_with_progress('departements.xlsx', sheet_name='NOMINATIVE USERS + ORIGINE', header=0)
 elr_habilite = read_excel_with_progress('departements.xlsx', sheet_name='LIST OF ELR', header=0)
 
-# Vérification des types de données pour s'assurer qu'ils sont bien des DataFrames
-assert isinstance(people, pd.DataFrame), f"Expected DataFrame but got {type(people)}"
-assert isinstance(custom, pd.DataFrame), f"Expected DataFrame but got {type(custom)}"
-assert isinstance(departements_c3, pd.DataFrame), f"Expected DataFrame but got {type(departements_c3)}"
-assert isinstance(nominative_users, pd.DataFrame), f"Expected DataFrame but got {type(nominative_users)}"
-assert isinstance(elr_habilite, pd.DataFrame), f"Expected DataFrame but got {type(elr_habilite)}"
-
-# Vérification des colonnes des DataFrames
-print("\n---------------\nVérification des colonnes des DataFrames...\n---------------")
+# Afficher les noms des colonnes pour vérification
+print("\n---------------\nVérification des colonnes dans les fichiers Excel...\n---------------")
 print("Colonnes de 'people':", people.columns.tolist())
 print("Colonnes de 'custom':", custom.columns.tolist())
 print("Colonnes de 'departements_c3':", departements_c3.columns.tolist())
 print("Colonnes de 'NOMINATIVE USERS + ORIGINE':", nominative_users.columns.tolist())
 print("Colonnes de 'LIST OF ELR':", elr_habilite.columns.tolist())
+
+# Vérifier les premières lignes de chaque DataFrame
+print("\n---------------\nAperçu des premières lignes des DataFrames...\n---------------")
+print("Premières lignes de 'people':\n", people.head())
+print("Premières lignes de 'custom':\n", custom.head())
+print("Premières lignes de 'departements_c3':\n", departements_c3.head())
+print("Premières lignes de 'NOMINATIVE USERS + ORIGINE':\n", nominative_users.head())
+print("Premières lignes de 'LIST OF ELR':\n", elr_habilite.head())
 
 # Nettoyer les départements C3 et créer un set des départements C3
 departements_c3_clean = departements_c3.iloc[5:, 0].apply(clean_department)  # Commence à partir de la ligne 6
