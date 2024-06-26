@@ -27,15 +27,10 @@ print("Initialisation du script...")
 # Lire les fichiers Excel avec barres de progression
 print("\n---------------\nLecture des fichiers Excel...\n---------------")
 people = read_excel_with_progress('people.xlsx', sheet_name=0, header=0)
-print(f"'people.xlsx' est de type {type(people)}")
 custom = read_excel_with_progress('custom.xlsx', sheet_name=0, header=0)
-print(f"'custom.xlsx' est de type {type(custom)}")
 departements_c3 = read_excel_with_progress('departements.xlsx', sheet_name='LIST C3 DPT ONLY INTERNALS', header=None)
-print(f"'departements.xlsx' (LIST C3 DPT ONLY INTERNALS) est de type {type(departements_c3)}")
 nominative_users = read_excel_with_progress('departements.xlsx', sheet_name='NOMINATIVE USERS + ORIGINE', header=0)
-print(f"'departements.xlsx' (NOMINATIVE USERS + ORIGINE) est de type {type(nominative_users)}")
 elr_habilite = read_excel_with_progress('departements.xlsx', sheet_name='LIST OF ELR', header=0)
-print(f"'departements.xlsx' (LIST OF ELR) est de type {type(elr_habilite)}")
 
 # Afficher les noms des colonnes pour vérification
 print("\n---------------\nVérification des colonnes dans les fichiers Excel...\n---------------")
@@ -56,10 +51,13 @@ print("Premières lignes de 'LIST OF ELR':\n", elr_habilite.head())
 # Nettoyer les départements C3 et créer un set des départements C3
 departements_c3_clean = departements_c3.iloc[5:, 0].apply(clean_department)  # Commence à partir de la ligne 6
 c3_departments = set(departements_c3_clean)
+print(f"\nDépartements C3 nettoyés : {c3_departments}")
 
 # Créer des sets pour les filtres supplémentaires
 nominative_emails = set(nominative_users['Mail'])
 elr_habilite_c3 = set(elr_habilite['ELR habilité au C3'])
+print(f"\nEmails nominatives : {nominative_emails}")
+print(f"\nELR habilité au C3 : {elr_habilite_c3}")
 
 # Créer des copies des DataFrames pour les manipulations
 people_copy = people.copy()
@@ -77,6 +75,8 @@ merged_data['LIB_SERVICE'] = merged_data['LIB_SERVICE'].fillna(merged_data['LIB_
 
 # Supprimer les colonnes inutiles après la fusion
 merged_data.drop(columns=['GROUP_MAIL_custom', 'LIB_SERVICE_custom'], inplace=True)
+print("\n---------------\nAperçu des données fusionnées...\n---------------")
+print("Premières lignes de 'merged_data':\n", merged_data.head())
 
 # Nouveau filtre pour vérifier la colonne LIB_CENTRE_ACTIVITE si LIB_SERVICE ne contient pas de /
 def get_c3_department(row):
@@ -96,9 +96,13 @@ merged_data['DEPARTEMENT'] = merged_data.apply(get_c3_department, axis=1)
 
 # Filtrer les utilisateurs C3
 filtered_data = merged_data[merged_data['DEPARTEMENT'].notna()]
+print("\n---------------\nAperçu des données filtrées (départements C3)...\n---------------")
+print("Premières lignes de 'filtered_data':\n", filtered_data.head())
 
 # Appliquer les nouveaux filtres
 filtered_data = filtered_data[filtered_data['GROUP_MAIL'].isin(nominative_emails) | filtered_data['LIB_ELR_RAPPRO'].isin(elr_habilite_c3)]
+print("\n---------------\nAperçu des données filtrées (emails et ELR)...\n---------------")
+print("Premières lignes de 'filtered_data' après filtres emails et ELR:\n", filtered_data.head())
 
 # Sélectionner les colonnes nécessaires pour le fichier final
 final_data = filtered_data[['IGG', 'GROUP_MAIL', 'DEPARTEMENT']]
