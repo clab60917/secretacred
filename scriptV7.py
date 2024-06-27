@@ -91,15 +91,15 @@ def get_c3_department(row):
 print("\n---------------\nApplication du filtre des départements C3...\n---------------")
 merged_data['DEPARTEMENT'] = merged_data.apply(get_c3_department, axis=1)
 
-# Filtrer les utilisateurs C3
-filtered_data = merged_data[merged_data['DEPARTEMENT'].notna()]
-print("\n---------------\nAperçu des données filtrées (départements C3)...\n---------------")
-print("Premières lignes de 'filtered_data':\n", filtered_data.head())
+# Filtrer les utilisateurs C3 (inclusion si l'un des critères est satisfait)
+filtered_data = merged_data[
+    merged_data['DEPARTEMENT'].notna() | 
+    merged_data['GROUP_MAIL'].isin(nominative_emails) | 
+    merged_data['LIB_ELR_RAPPRO'].isin(elr_habilite_c3)
+]
 
-# Appliquer les nouveaux filtres
-filtered_data = filtered_data[filtered_data['GROUP_MAIL'].isin(nominative_emails) | filtered_data['LIB_ELR_RAPPRO'].isin(elr_habilite_c3)]
-print("\n---------------\nAperçu des données filtrées (emails et ELR)...\n---------------")
-print("Premières lignes de 'filtered_data' après filtres emails et ELR:\n", filtered_data.head())
+print("\n---------------\nAperçu des données filtrées (départements C3, emails et ELR)...\n---------------")
+print("Premières lignes de 'filtered_data' après filtres:\n", filtered_data.head())
 
 # Sélectionner les colonnes nécessaires pour le fichier final
 final_data = filtered_data[['IGG', 'GROUP_MAIL', 'DEPARTEMENT']]
