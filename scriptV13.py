@@ -33,8 +33,7 @@ def is_excluded(row, excluded_departments, excluded_emails, all_types_department
         any(label in str(row['CONTRACT_GROUP_TYPE_LABEL']) for label in excluded_labels) or
         '-ext' in str(row['GROUP_MAIL']) or
         row['LIB_SERVICE'] in excluded_departments or
-        row['GROUP_MAIL'] in excluded_emails or
-        str(row['STATUS_GROUP_LABEL']) == 'Absents'
+        row['GROUP_MAIL'] in excluded_emails
     )
 
 print("Initialisation du script...")
@@ -64,7 +63,7 @@ print("Premières lignes de 'custom':\n", custom.head())
 print("Premières lignes de 'departements_c3':\n", departements_c3.head())
 print("Premières lignes de 'NOMINATIVE USERS':\n", nominative_users.head())
 print("Premières lignes de 'LIST OF ELR':\n", elr_habilite.head())
-print("Premières lignes de 'DPTS-USER TO BE EXCLUDED':\n", dpts_user_to_exclude.head())
+print("Premières lignes de 'DPTS-USER TO BE EXCLUS':\n", dpts_user_to_exclude.head())
 print("Premières lignes de 'LIST C3 DPT ALL TYPES':\n", all_types_departments.head())
 
 # Étape 1 : Synchronisation des données entre people et custom
@@ -125,19 +124,20 @@ filtered_data_elr = filtered_data_elr[~filtered_data_elr.apply(lambda row: is_ex
 print("\n---------------\nAperçu des données filtrées après exclusion (ELR habilité au C3)...\n---------------")
 print("Premières lignes de 'filtered_data_elr' après exclusion:\n", filtered_data_elr.head())
 
-# Étape 4 : Application des autres filtres (entités à partir de la colonne G)
-print("\n---------------\nApplication des autres filtres (emails nominatives et entités)...\n---------------")
+# Étape 4 : Application des autres filtres (emails nominatives)
+print("\n---------------\nApplication des autres filtres (emails nominatives)...\n---------------")
 nominative_emails = set(nominative_users['Mail'])
-nominative_entites = set(nominative_users.iloc[:, 6])  # Colonne G correspond à l'index 6
-filtered_data_others = merged_data[merged_data['GROUP_MAIL'].isin(nominative_emails) | merged_data['LIB_SERVICE'].isin(nominative_entites)]
-print("\n---------------\nAperçu des données filtrées (emails nominatives et entités)...\n---------------")
+filtered_data_others = merged_data[merged_data['GROUP_MAIL'].isin(nominative_emails)]
+print("\n---------------\nAperçu des données filtrées (emails nominatives)...\n---------------")
 print("Premières lignes de 'filtered_data_others':\n", filtered_data_others.head())
 
 # Combiner tous les filtres pour inclure les utilisateurs qui remplissent au moins un critère
 filtered_data = pd.concat([filtered_data_c3, filtered_data_elr, filtered_data_others]).drop_duplicates()
 
-# Filtre final : Exclusion des utilisateurs avec 'Absents' dans STATUS_GROUP_LABEL et ceux dans DPTS-USER TO BE EXCLUDED
+# Filtre final : Exclusion des utilisateurs avec 'Absents' dans STATUS_GROUP_LABEL
 filtered_data = filtered_data[filtered_data['STATUS_GROUP_LABEL'] != 'Absents']  # Exclure les utilisateurs avec STATUS_GROUP_LABEL == 'Absents'
+
+# Appliquer les règles d'exclusion finales
 filtered_data = filtered_data[~filtered_data.apply(lambda row: is_excluded(row, excluded_departments, excluded_emails, all_types_departments_set), axis=1)]
 
 print("\n---------------\nAperçu des données combinées après filtres...\n---------------")
