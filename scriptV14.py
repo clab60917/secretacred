@@ -126,7 +126,7 @@ print("Premières lignes de 'filtered_data_elr' après exclusion:\n", filtered_d
 
 # Étape 4 : Application des autres filtres (emails nominatives)
 print("\n---------------\nApplication des autres filtres (emails nominatives)...\n---------------")
-nominative_emails = set(nominative_users['Mail'])
+nominative_emails = set(nominative_users.iloc[:, 2])
 filtered_data_others = merged_data[merged_data['GROUP_MAIL'].isin(nominative_emails)]
 print("\n---------------\nAperçu des données filtrées (emails nominatives)...\n---------------")
 print("Premières lignes de 'filtered_data_others':\n", filtered_data_others.head())
