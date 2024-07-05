@@ -14,8 +14,8 @@ def highlight_differences(file_path, sheet_name, column, values_to_highlight, co
     wb.save(file_path)
 
 # Lire les fichiers Excel
-df_output = pd.read_excel('output_cleaned.xlsx')
-df_jerome = pd.read_excel('jerome.xlsx')
+df_output = pd.read_excel('C3_accredited_users.xlsx')
+df_jerome = pd.read_excel('collegue.xlsx')
 
 # Extraire les colonnes à comparer
 col_output = df_output['GROUP MAIL'].dropna().str.lower()
