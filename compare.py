@@ -1,27 +1,27 @@
 import pandas as pd
 
 # Charger les fichiers Excel
-votre_output = pd.read_excel('C3_accredited_users_cleaned.xlsx')
-collegue_output = pd.read_excel('collegue.xlsx')
+your_output = pd.read_excel('C3_accredited_users.xlsx')
+colleague_output = pd.read_excel('collegue.xlsx', usecols=[1])  # Assurez-vous que la colonne des mails est la deuxième colonne (index 1)
 
-# Extraire les mails des utilisateurs C3 de chaque fichier
-vos_mails = set(votre_output['GROUP_MAIL'])
-collegue_mails = set(collegue_output.iloc[:, 1])  # Colonne B correspond à l'index 1
+# Extraire les mails
+your_emails = set(your_output['GROUP_MAIL'].dropna())
+colleague_emails = set(colleague_output.iloc[:, 0].dropna())
 
-# Trouver les différences
-mails_uniques_vos = vos_mails - collegue_mails
-mails_uniques_collegue = collegue_mails - vos_mails
-mails_communs = vos_mails & collegue_mails
+# Trouver les différences et les mails communs
+emails_in_your_not_in_colleague = your_emails - colleague_emails
+emails_in_colleague_not_in_your = colleague_emails - your_emails
+common_emails = your_emails & colleague_emails
 
 # Créer des DataFrames pour les résultats
-unique_vos_df = votre_output[votre_output['GROUP_MAIL'].isin(mails_uniques_vos)]
-unique_collegue_df = collegue_output[collegue_output.iloc[:, 1].isin(mails_uniques_collegue)]
-communs_df = votre_output[votre_output['GROUP_MAIL'].isin(mails_communs)]
+df_emails_in_your_not_in_colleague = pd.DataFrame(list(emails_in_your_not_in_colleague), columns=["Emails in your output but not in colleague's"])
+df_emails_in_colleague_not_in_your = pd.DataFrame(list(emails_in_colleague_not_in_your), columns=["Emails in colleague's output but not in yours"])
+df_common_emails = pd.DataFrame(list(common_emails), columns=['Common Emails'])
 
-# Sauvegarder les résultats dans un fichier Excel avec des feuilles séparées
-with pd.ExcelWriter('comparison_C3_users.xlsx') as writer:
-    unique_vos_df.to_excel(writer, sheet_name='Vos utilisateurs uniques', index=False)
-    unique_collegue_df.to_excel(writer, sheet_name='Utilisateurs collègues uniques', index=False)
-    communs_df.to_excel(writer, sheet_name='Utilisateurs communs', index=False)
+# Enregistrer les résultats dans des fichiers Excel
+with pd.ExcelWriter('comparison_results.xlsx') as writer:
+    df_emails_in_your_not_in_colleague.to_excel(writer, sheet_name='In your not in colleague', index=False)
+    df_emails_in_colleague_not_in_your.to_excel(writer, sheet_name='In colleague not in your', index=False)
+    df_common_emails.to_excel(writer, sheet_name='Common Emails', index=False)
 
-print("\n---------------\nLe script a été exécuté avec succès. Les différences ont été sauvegardées dans 'comparison_C3_users.xlsx'.\n---------------")
+print("La comparaison des mails est terminée. Les résultats ont été enregistrés dans 'comparison_results.xlsx'.")
