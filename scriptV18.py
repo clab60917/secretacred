@@ -101,8 +101,7 @@ def get_c3_department(row):
     lib_service = str(row['LIB_SERVICE']) if pd.notna(row['LIB_SERVICE']) else ''
     lib_centre_activite = str(row['LIB_CENTRE_ACTIVITE']) if pd.notna(row['LIB_CENTRE_ACTIVITE']) else ''
     for dept in c3_departments:
-        if any(lib_service.startswith(d) for d in c3_departments) or \
-           any(lib_centre_activite.startswith(d) for d in c3_departments):
+        if lib_service.startswith(dept) or lib_centre_activite.startswith(dept):
             return dept
     return None
 
@@ -116,7 +115,31 @@ filtered_data_c3 = filtered_data_c3[~filtered_data_c3.apply(lambda row: is_exclu
 print("\n---------------\nAperçu des données filtrées après exclusion (départements C3)...\n---------------")
 print("Premières lignes de 'filtered_data_c3' après exclusion:\n", filtered_data_c3.head())
 
-# Étape 3 : Filtrage selon 'LIST OF ELR'
+# Étape 3 : Filtrage selon 'LIST C3 DPT ALL TYPES'
+print("\n---------------\nFiltrage selon 'LIST C3 DPT ALL TYPES'...\n---------------")
+all_types_departments_clean = all_types_departments.iloc[:, 0].apply(clean_department)
+all_types_departments_set = set(all_types_departments_clean)
+print(f"\nDépartements 'ALL TYPES' nettoyés : {all_types_departments_set}")
+
+def get_all_types_department(row):
+    lib_service = str(row['LIB_SERVICE']) if pd.notna(row['LIB_SERVICE']) else ''
+    lib_centre_activite = str(row['LIB_CENTRE_ACTIVITE']) if pd.notna(row['LIB_CENTRE_ACTIVITE']) else ''
+    for dept in all_types_departments_set:
+        if lib_service.startswith(dept) or lib_centre_activite.startswith(dept):
+            return dept
+    return None
+
+merged_data['DEPARTEMENT_ALL_TYPES'] = merged_data.apply(get_all_types_department, axis=1)
+filtered_data_all_types = merged_data[merged_data['DEPARTEMENT_ALL_TYPES'].notna()]
+print("\n---------------\nAperçu des données filtrées (départements 'ALL TYPES')...\n---------------")
+print("Premières lignes de 'filtered_data_all_types':\n", filtered_data_all_types.head())
+
+# Appliquer les nouvelles règles d'exclusion
+filtered_data_all_types = filtered_data_all_types[~filtered_data_all_types.apply(lambda row: is_excluded(row, excluded_departments, excluded_emails, all_types_departments_set), axis=1)]
+print("\n---------------\nAperçu des données filtrées après exclusion (départements 'ALL TYPES')...\n---------------")
+print("Premières lignes de 'filtered_data_all_types' après exclusion:\n", filtered_data_all_types.head())
+
+# Étape 4 : Filtrage selon 'LIST OF ELR'
 print("\n---------------\nFiltrage selon 'LIST OF ELR'...\n---------------")
 elr_habilite_c3 = set(elr_habilite['ELR habilité au C3'])
 filtered_data_elr = merged_data[merged_data['LIB_ELR_RAPPRO'].isin(elr_habilite_c3)]
@@ -128,7 +151,7 @@ filtered_data_elr = filtered_data_elr[~filtered_data_elr.apply(lambda row: is_ex
 print("\n---------------\nAperçu des données filtrées après exclusion (ELR habilité au C3)...\n---------------")
 print("Premières lignes de 'filtered_data_elr' après exclusion:\n", filtered_data_elr.head())
 
-# Étape 4 : Application des autres filtres (emails nominatives)
+# Étape 5 : Application des autres filtres (emails nominatives)
 print("\n---------------\nApplication des autres filtres (emails nominatives)...\n---------------")
 nominative_emails = set(nominative_users.iloc[:, 2])
 filtered_data_others = merged_data[merged_data['GROUP_MAIL'].isin(nominative_emails)]
@@ -136,7 +159,7 @@ print("\n---------------\nAperçu des données filtrées (emails nominatives)...
 print("Premières lignes de 'filtered_data_others':\n", filtered_data_others.head())
 
 # Combiner tous les filtres pour inclure les utilisateurs qui remplissent au moins un critère
-filtered_data = pd.concat([filtered_data_c3, filtered_data_elr, filtered_data_others]).drop_duplicates()
+filtered_data = pd.concat([filtered_data_c3, filtered_data_all_types, filtered_data_elr, filtered_data_others]).drop_duplicates()
 
 # Filtre final : Exclusion des utilisateurs avec 'Absents' dans STATUS_GROUP_LABEL
 filtered_data = filtered_data[filtered_data['STATUS_GROUP_LABEL'] != 'Absents']
