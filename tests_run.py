@@ -50,8 +50,13 @@ def test_nominative_users():
 # Test 4: Comparaison avec la liste des utilisateurs à exclure
 def test_excluded_users():
     print("\nTest 4: Comparaison avec la liste des utilisateurs à exclure")
-    excluded_users = set(departements_data['DPTS-USER TO BE EXCLUDED']['Mail'])
+    # Obtenir la colonne des e-mails à exclure (colonne E dans l'onglet 'DPTS-USER TO BE EXCLUDED')
+    excluded_sheet = departements_data['DPTS-USER TO BE EXCLUDED']
+    email_column = excluded_sheet.columns[4]  # Colonne E est l'index 4 (0-indexed)
+    
+    excluded_users = set(excluded_sheet[email_column].dropna())
     remaining_excluded_users = excluded_users & set(output_data['GROUP_MAIL'])
+    
     if not remaining_excluded_users:
         print("Test réussi : Aucun utilisateur devant être exclu n'est présent dans la liste finale.")
     else:
