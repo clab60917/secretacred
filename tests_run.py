@@ -124,12 +124,12 @@ def test_compare_potential_c3():
 
     print_result(True, "Les fichiers de comparaison des listes C3 ont été générés.")
 
-# Test 8: Vérification des utilisateurs de test.txt dans l'output final
-def test_users_in_test_txt():
-    print("\n" + Style.BRIGHT + "Test 8: Vérification des utilisateurs de test.txt dans l'output final")
-    with open('test.txt', 'r') as f:
-        test_emails = set(f.read().splitlines())
-    
+# Test 8: Vérification des utilisateurs de JDE.xlsx dans l'output final
+def test_users_in_jde():
+    print("\n" + Style.BRIGHT + "Test 8: Vérification des utilisateurs de JDE.xlsx dans l'output final")
+    jde_data = pd.read_excel('JDE.xlsx')
+    test_emails = set(jde_data['GROUP_MAIL'].dropna())
+
     # Vérification de la présence dans l'output
     present_users = test_emails & set(output_data['GROUP_MAIL'])
     absent_users = test_emails - set(output_data['GROUP_MAIL'])
@@ -138,9 +138,9 @@ def test_users_in_test_txt():
     print(Fore.RED + f"Utilisateurs manquants dans l'output: {len(absent_users)}")
     
     if absent_users:
-        print_result(False, f"Les utilisateurs suivants de test.txt ne sont pas présents dans la liste des utilisateurs C3:\n{absent_users}")
+        print_result(False, f"Les utilisateurs suivants de JDE.xlsx ne sont pas présents dans la liste des utilisateurs C3:\n{absent_users}")
     else:
-        print_result(True, "Tous les utilisateurs de test.txt sont présents dans la liste des utilisateurs C3.")
+        print_result(True, "Tous les utilisateurs de JDE.xlsx sont présents dans la liste des utilisateurs C3.")
 
 # Exécution des tests
 test_departments_igad_dfin()
@@ -150,4 +150,4 @@ test_excluded_users()
 test_users_to_verify()
 test_count_igad_dfin()
 test_compare_potential_c3()
-test_users_in_test_txt()
+test_users_in_jde()
