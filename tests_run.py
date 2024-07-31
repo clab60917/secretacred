@@ -8,6 +8,7 @@ init(autoreset=True)
 synchro_data = pd.read_excel('synchronized_people_custom.xlsx')
 departements_data = pd.read_excel('departements.xlsx', sheet_name=None)
 output_data = pd.read_excel('C3_accredited_users.xlsx')
+collegue_data = pd.read_excel('collegue.xlsx', header=None, names=['GROUP_MAIL'])
 
 def print_result(success, message):
     if success:
@@ -68,14 +69,78 @@ def test_excluded_users():
 # Test 5: Création d'une liste de noms à vérifier
 def test_users_to_verify():
     print("\n" + Style.BRIGHT + "Test 5: Création d'une liste de noms à vérifier")
-    uncertain_users = []  # Liste à remplir manuellement ou par des critères spécifiques
+    uncertain_users = []
 
-    # Placeholder pour une méthode d'identification automatique ou manuelle
-    # Ajouter des critères pour identifier les utilisateurs à vérifier ou utiliser une liste pré-établie
+    # Critère 1: Utilisateurs avec des domaines d'e-mail externes
+    external_emails = output_data[~output_data['GROUP_MAIL'].str.endswith('@votreentreprise.com')]
+    uncertain_users.extend(external_emails['GROUP_MAIL'].tolist())
+
+    # Critère 2: Utilisateurs avec des titres de poste spécifiques (ajustez selon vos besoins)
+    specific_titles = synchro_data[synchro_data['CONTRACT_GROUP_TYPE_LABEL'].str.contains('Trainee|Apprenticeship|Extern-temp|International Business Volunte', na=False)]
+    uncertain_users.extend(specific_titles['GROUP_MAIL'].tolist())
+
+    # Supprimer les doublons
+    uncertain_users = list(set(uncertain_users))
 
     # Export de la liste des noms à vérifier
     pd.DataFrame(uncertain_users, columns=['GROUP_MAIL']).to_excel('Users_to_Verify.xlsx', index=False)
     print_result(True, "Le fichier 'Users_to_Verify.xlsx' a été généré pour vérification manuelle.")
+
+# Test 6: Compter les utilisateurs IGAD et DFIN
+def test_count_igad_dfin():
+    print("\n" + Style.BRIGHT + "Test 6: Compter les utilisateurs IGAD et DFIN")
+    igad_users = synchro_data[synchro_data['LIB_SERVICE'].str.contains('IGAD', na=False)]
+    dfin_users = synchro_data[synchro_data['LIB_SERVICE'].str.contains('DFIN', na=False)]
+    
+    print(Fore.CYAN + f"Nombre d'utilisateurs dans IGAD: {len(igad_users)}")
+    print(Fore.CYAN + f"Nombre d'utilisateurs dans DFIN: {len(dfin_users)}")
+
+# Test 7: Comparaison des listes C3 potentielles
+def test_compare_potential_c3():
+    print("\n" + Style.BRIGHT + "Test 7: Comparaison des listes C3 potentielles")
+    # Chargement des mails des utilisateurs potentiellement C3
+    potential_c3_users = pd.read_excel('Potential_C3_Users_Comparison.xlsx')['GROUP_MAIL']
+    collegue_c3_users = set(collegue_data['GROUP_MAIL'].dropna())
+    script_output_c3_users = set(output_data['GROUP_MAIL'].dropna())
+
+    # Utilisateurs communs entre les trois listes
+    common_users = set(potential_c3_users).intersection(collegue_c3_users, script_output_c3_users)
+    # Utilisateurs spécifiques à chaque source
+    only_in_potential = set(potential_c3_users) - (collegue_c3_users | script_output_c3_users)
+    only_in_collegue = collegue_c3_users - (set(potential_c3_users) | script_output_c3_users)
+    only_in_script = script_output_c3_users - (set(potential_c3_users) | collegue_c3_users)
+
+    # Affichage des résultats
+    print(Fore.CYAN + f"Utilisateurs communs: {len(common_users)}")
+    print(Fore.YELLOW + f"Uniquement dans Potential_C3_Users_Comparison.xlsx: {len(only_in_potential)}")
+    print(Fore.YELLOW + f"Uniquement dans collegue.xlsx: {len(only_in_collegue)}")
+    print(Fore.YELLOW + f"Uniquement dans C3_accredited_users.xlsx: {len(only_in_script)}")
+
+    # Export des résultats pour vérification manuelle
+    pd.DataFrame({'Common Users': list(common_users)}).to_excel('Common_C3_Users.xlsx', index=False)
+    pd.DataFrame({'Only in Potential': list(only_in_potential)}).to_excel('Only_in_Potential_C3_Users.xlsx', index=False)
+    pd.DataFrame({'Only in Collegue': list(only_in_collegue)}).to_excel('Only_in_Collegue_C3_Users.xlsx', index=False)
+    pd.DataFrame({'Only in Script Output': list(only_in_script)}).to_excel('Only_in_Script_Output_C3_Users.xlsx', index=False)
+
+    print_result(True, "Les fichiers de comparaison des listes C3 ont été générés.")
+
+# Test 8: Vérification des utilisateurs de test.txt dans l'output final
+def test_users_in_test_txt():
+    print("\n" + Style.BRIGHT + "Test 8: Vérification des utilisateurs de test.txt dans l'output final")
+    with open('test.txt', 'r') as f:
+        test_emails = set(f.read().splitlines())
+    
+    # Vérification de la présence dans l'output
+    present_users = test_emails & set(output_data['GROUP_MAIL'])
+    absent_users = test_emails - set(output_data['GROUP_MAIL'])
+
+    print(Fore.CYAN + f"Utilisateurs trouvés dans l'output: {len(present_users)}")
+    print(Fore.RED + f"Utilisateurs manquants dans l'output: {len(absent_users)}")
+    
+    if absent_users:
+        print_result(False, f"Les utilisateurs suivants de test.txt ne sont pas présents dans la liste des utilisateurs C3:\n{absent_users}")
+    else:
+        print_result(True, "Tous les utilisateurs de test.txt sont présents dans la liste des utilisateurs C3.")
 
 # Exécution des tests
 test_departments_igad_dfin()
@@ -83,3 +148,6 @@ test_c3_dpt_only()
 test_nominative_users()
 test_excluded_users()
 test_users_to_verify()
+test_count_igad_dfin()
+test_compare_potential_c3()
+test_users_in_test_txt()
