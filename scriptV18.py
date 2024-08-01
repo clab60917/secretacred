@@ -25,14 +25,15 @@ def is_excluded(row, excluded_departments, excluded_emails, all_types_department
     excluded_labels = {
         'Trainee', 'Apprenticeship/learning', 'Extern-temp', 'International Business Volunte'
     }
-    if any(str(row['LIB_SERVICE']).startswith(dept) for dept in all_types_departments) or \
-       any(str(row['LIB_CENTRE_ACTIVITE']).startswith(dept) for dept in all_types_departments):
+    # Ne pas exclure si le département est dans all_types_departments
+    if any(str(row['LIB_SERVICE']).startswith(str(dept)) for dept in all_types_departments) or \
+       any(str(row['LIB_CENTRE_ACTIVITE']).startswith(str(dept)) for dept in all_types_departments):
         return False
     return (
         row['CONTRACT_GROUP_TYPE_CODE'] in excluded_contract_codes or
         any(label in str(row['CONTRACT_GROUP_TYPE_LABEL']) for label in excluded_labels) or
         '-ext' in str(row['GROUP_MAIL']) or
-        any(str(row['LIB_SERVICE']).startswith(dept) for dept in excluded_departments) or
+        any(str(row['LIB_SERVICE']).startswith(str(dept)) for dept in excluded_departments) or
         row['GROUP_MAIL'] in excluded_emails
     )
 
