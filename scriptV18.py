@@ -125,8 +125,9 @@ def get_all_types_department(row):
     lib_service = str(row['LIB_SERVICE']) if pd.notna(row['LIB_SERVICE']) else ''
     lib_centre_activite = str(row['LIB_CENTRE_ACTIVITE']) if pd.notna(row['LIB_CENTRE_ACTIVITE']) else ''
     for dept in all_types_departments_set:
-        if lib_service.startswith(dept) or lib_centre_activite.startswith(dept):
-            return dept
+        dept_str = str(dept)  # Convertir dept en chaîne de caractères
+        if lib_service.startswith(dept_str) or lib_centre_activite.startswith(dept_str):
+            return dept_str
     return None
 
 merged_data['DEPARTEMENT_ALL_TYPES'] = merged_data.apply(get_all_types_department, axis=1)
