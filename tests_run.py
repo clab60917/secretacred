@@ -44,21 +44,28 @@ def test_comparison_with_jerome_clement():
     clement_extra = set(tuple(x) for x in clement_data.to_numpy())
     expected_in_c3 = clement_extra & c3_mails_depts_set
 
-    def print_comparison_result(label, missing_from_c3, expected_in_c3):
+    def print_comparison_result(label, missing_from_c3, expected_in_c3=None):
         if missing_from_c3:
             print(Fore.RED + f"[ÉCHEC] {label} - Utilisateurs manquants dans le C3:")
-            for email, dept in missing_from_c3:
-                print(Fore.RED + f"Email: {email}, Département: {dept}")
-        else:
-            print(Fore.GREEN + f"[SUCCÈS] {label} - Tous les utilisateurs sont correctement inclus.")
+            for item in missing_from_c3:
+                if isinstance(item, tuple) and len(item) == 2:
+                    email, dept = item
+                    print(Fore.RED + f"Email: {email}, Département: {dept}")
+                else:
+                    print(Fore.RED + f"Élément inattendu: {item}")
 
         if expected_in_c3:
-            print(Fore.YELLOW + f"[ATTENTION] {label} - Utilisateurs trouvés mais inattendus dans le C3:")
-            for email, dept in expected_in_c3:
-                print(Fore.YELLOW + f"Email: {email}, Département: {dept}")
+            if expected_in_c3:
+                print(Fore.YELLOW + f"[ATTENTION] {label} - Utilisateurs trouvés mais inattendus dans le C3:")
+                for item in expected_in_c3:
+                    if isinstance(item, tuple) and len(item) == 2:
+                        email, dept = item
+                        print(Fore.YELLOW + f"Email: {email}, Département: {dept}")
+                    else:
+                        print(Fore.YELLOW + f"Élément inattendu: {item}")
 
-    print_comparison_result("Comparaison avec les utilisateurs manquants (Jerome)", missing_from_c3, expected_in_c3)
-    print_comparison_result("Comparaison avec les utilisateurs inattendus (Clement)", clement_extra - c3_mails_depts_set, None)
+    print_comparison_result("Comparaison avec les utilisateurs manquants (Jerome)", missing_from_c3)
+    print_comparison_result("Comparaison avec les utilisateurs inattendus (Clement)", clement_extra - c3_mails_depts_set)
 
 def main():
     test_nominative_users()
