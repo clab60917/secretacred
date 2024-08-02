@@ -3,14 +3,14 @@ from alive_progress import alive_bar
 from openpyxl import load_workbook
 import os
 
-def read_excel_with_progress(file_path, sheet_name=None, header='infer'):
+def read_excel_with_progress(file_path, sheet_name=None, header='infer', skiprows=None):
     wb = load_workbook(filename=file_path, read_only=True)
     ws = wb[sheet_name] if sheet_name else wb.active
     total_rows = ws.max_row
     wb.close()
 
     with alive_bar(total_rows, title=f"Chargement du fichier '{file_path}'") as bar:
-        data = pd.read_excel(file_path, sheet_name=sheet_name, header=header)
+        data = pd.read_excel(file_path, sheet_name=sheet_name, header=header, skiprows=skiprows)
         for _ in range(total_rows):
             bar()
     return data
@@ -65,7 +65,7 @@ departements_c3 = read_excel_with_progress('departements.xlsx', sheet_name='LIST
 nominative_users = read_excel_with_progress('departements.xlsx', sheet_name='NOMINATIVE USERS', header=0)
 elr_habilite = read_excel_with_progress('departements.xlsx', sheet_name='LIST OF ELR', header=0)
 dpts_user_to_exclude = read_excel_with_progress('departements.xlsx', sheet_name='DPTS-USER TO BE EXCLUDED', header=0)
-all_types_departments = read_excel_with_progress('departements.xlsx', sheet_name='LIST C3 DPT ALL TYPES', header=None)
+all_types_departments = read_excel_with_progress('departements.xlsx', sheet_name='LIST C3 DPT ALL TYPES', header=None, skiprows=3)
 
 print("\n---------------\nVérification des colonnes dans les fichiers Excel...\n---------------")
 print("Colonnes de 'merged_data':", merged_data.columns.tolist())
@@ -162,7 +162,7 @@ print("Premières lignes de 'filtered_data_others':\n", filtered_data_others.hea
 filtered_data = pd.concat([filtered_data_c3, filtered_data_all_types, filtered_data_elr, filtered_data_others]).drop_duplicates()
 
 # Filtre final : Exclusion des utilisateurs avec 'Absents' dans STATUS_GROUP_LABEL
-filtered_data = filtered_data[filtered_data['STATUS_GROUP_LABEL'] != 'Absent']
+filtered_data = filtered_data[filtered_data['STATUS_GROUP_LABEL'] != 'Absents']
 filtered_data = filtered_data[~filtered_data.apply(lambda row: is_excluded(row, excluded_departments, excluded_emails, all_types_departments_set), axis=1)]
 
 print("\n---------------\nAperçu des données combinées après filtres...\n---------------")
