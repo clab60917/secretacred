@@ -2,11 +2,11 @@ import pandas as pd
 
 # Charger les fichiers Excel
 your_output = pd.read_excel('C3_accredited_users.xlsx')
-colleague_output = pd.read_excel('colleague_output.xlsx', header=None, names=['GROUP_MAIL'])  # Lire le fichier de votre collègue sans en-tête
+colleague_output = pd.read_excel('colleague_output.xlsx', header=None, names=['GROUP_MAIL'])
 
-# Extraire les mails
-your_emails = set(your_output['GROUP_MAIL'].dropna())
-colleague_emails = set(colleague_output['GROUP_MAIL'].dropna())
+# Extraire et normaliser les mails en minuscules
+your_emails = set(your_output['GROUP_MAIL'].dropna().str.lower())
+colleague_emails = set(colleague_output['GROUP_MAIL'].dropna().str.lower())
 
 # Trouver les différences et les mails communs
 emails_in_your_not_in_colleague = your_emails - colleague_emails
