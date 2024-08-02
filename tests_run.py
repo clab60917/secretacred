@@ -1,153 +1,113 @@
 import pandas as pd
-from colorama import init, Fore, Style
+from colorama import Fore, Style, init
+from openpyxl import load_workbook
 
-# Initialisation de colorama
+# Initialiser colorama pour les couleurs dans le terminal
 init(autoreset=True)
 
-# Chargement des données de référence et de l'output du script
-synchro_data = pd.read_excel('synchronized_people_custom.xlsx')
-departements_data = pd.read_excel('departements.xlsx', sheet_name=None)
-output_data = pd.read_excel('C3_accredited_users.xlsx')
-collegue_data = pd.read_excel('collegue.xlsx', header=None, names=['GROUP_MAIL'])
+# Chemins des fichiers
+c3_output_file = 'C3_accredited_users.xlsx'
+colleague_output_file = 'colleague_output.xlsx'
+jde_file = 'JDE.xlsx'
+comparison_file = 'comparison_data.xlsx'
 
-def print_result(success, message):
-    if success:
-        print(Fore.GREEN + Style.BRIGHT + "Test réussi: " + message)
-    else:
-        print(Fore.RED + Style.BRIGHT + "Échec du test: " + message)
+# Charger les fichiers Excel nécessaires
+c3_data = pd.read_excel(c3_output_file)
+colleague_data = pd.read_excel(colleague_output_file, header=None, names=['GROUP_MAIL'])
+jde_data = pd.read_excel(jde_file)
+comparison_data = pd.read_excel(comparison_file, sheet_name=None)
 
-# Test 1: Vérification des utilisateurs des départements IGAD et DFIN
-def test_departments_igad_dfin():
-    print("\n" + Style.BRIGHT + "Test 1: Vérification des utilisateurs des départements IGAD et DFIN")
-    igad_dfin_users = synchro_data[
-        synchro_data['LIB_SERVICE'].str.contains('IGAD|DFIN', na=False)
-    ]
-    mismatches = igad_dfin_users[~igad_dfin_users['GROUP_MAIL'].isin(output_data['GROUP_MAIL'])]
-    if mismatches.empty:
-        print_result(True, "Tous les utilisateurs des départements IGAD et DFIN sont inclus dans la liste des utilisateurs C3.")
-    else:
-        print_result(False, f"Les utilisateurs suivants des départements IGAD et DFIN ne sont pas inclus dans la liste des utilisateurs C3:\n{mismatches}")
+# Extraire les onglets 'jerome' et 'clement'
+jerome_data = comparison_data['jerome']
+clement_data = comparison_data['clement']
 
-# Test 2: Comparaison entre synchronized_people_custom.xlsx et l'onglet "C3 dpt only"
-def test_c3_dpt_only():
-    print("\n" + Style.BRIGHT + "Test 2: Comparaison entre synchronized_people_custom.xlsx et l'onglet 'C3 dpt only'")
-    c3_dpt_only = departements_data['LIST C3 DPT ONLY INTERNALS']
-    c3_dpt_only_departments = set(c3_dpt_only.iloc[5:, 0].apply(lambda x: str(x).split('.')[0].strip()))
-
-    potential_c3_users = synchro_data[
-        synchro_data['LIB_SERVICE'].apply(lambda x: any(dept in str(x) for dept in c3_dpt_only_departments))
-    ]
-    potential_c3_users.to_excel('Potential_C3_Users_Comparison.xlsx', index=False)
-    print_result(True, "Le fichier 'Potential_C3_Users_Comparison.xlsx' a été généré pour comparaison manuelle.")
-
-# Test 3: Vérification des utilisateurs nominatifs
+# Tests
 def test_nominative_users():
-    print("\n" + Style.BRIGHT + "Test 3: Vérification des utilisateurs nominatifs")
-    nominative_users = departements_data['NOMINATIVE USERS']
-    nominative_emails = set(nominative_users['Mail'].dropna())
+    print(Fore.BLUE + "\n--- Test des utilisateurs nominatifs ---")
+    nominative_mails = set(jde_data['GROUP_MAIL'].dropna())
+    c3_mails = set(c3_data['GROUP_MAIL'].dropna())
 
-    missing_users = nominative_emails - set(output_data['GROUP_MAIL'])
-    if not missing_users:
-        print_result(True, "Tous les utilisateurs nominatifs sont inclus dans la liste des utilisateurs C3.")
+    missing_mails = nominative_mails - c3_mails
+
+    if not missing_mails:
+        print(Fore.GREEN + "[SUCCÈS] Tous les utilisateurs nominatifs sont inclus.")
     else:
-        print_result(False, f"Les utilisateurs nominatifs suivants ne sont pas inclus dans la liste des utilisateurs C3:\n{missing_users}")
+        print(Fore.RED + "[ÉCHEC] Les utilisateurs nominatifs suivants ne sont pas inclus :")
+        for mail in missing_mails:
+            print(Fore.RED + mail)
 
-# Test 4: Comparaison avec la liste des utilisateurs à exclure
 def test_excluded_users():
-    print("\n" + Style.BRIGHT + "Test 4: Comparaison avec la liste des utilisateurs à exclure")
-    excluded_sheet = departements_data['DPTS-USER TO BE EXCLUDED']
-    email_column = excluded_sheet.columns[4]  # Colonne E est l'index 4 (0-indexed)
-
-    excluded_users = set(excluded_sheet[email_column].dropna())
-    remaining_excluded_users = excluded_users & set(output_data['GROUP_MAIL'])
+    print(Fore.BLUE + "\n--- Test des utilisateurs à exclure ---")
+    dpts_user_to_exclude = load_workbook(comparison_file, read_only=True)['DPTS-USER TO BE EXCLUDED']
+    excluded_emails = {row[4].value for row in dpts_user_to_exclude.iter_rows(min_row=2) if row[4].value}
+    excluded_emails = excluded_emails - {None}
     
-    if not remaining_excluded_users:
-        print_result(True, "Aucun utilisateur devant être exclu n'est présent dans la liste finale.")
+    c3_emails = set(c3_data['GROUP_MAIL'].dropna())
+
+    included_excluded_mails = c3_emails & excluded_emails
+
+    if not included_excluded_mails:
+        print(Fore.GREEN + "[SUCCÈS] Aucun utilisateur exclu ne figure dans la liste C3.")
     else:
-        print_result(False, f"Les utilisateurs suivants, qui devraient être exclus, sont encore présents dans la liste finale:\n{remaining_excluded_users}")
+        print(Fore.RED + "[ÉCHEC] Les utilisateurs suivants, qui devaient être exclus, sont toujours présents :")
+        for mail in included_excluded_mails:
+            print(Fore.RED + mail)
 
-# Test 5: Création d'une liste de noms à vérifier
-def test_users_to_verify():
-    print("\n" + Style.BRIGHT + "Test 5: Création d'une liste de noms à vérifier")
-    uncertain_users = []
+def test_comparison_with_colleague():
+    print(Fore.BLUE + "\n--- Test de comparaison avec la liste du collègue ---")
+    your_emails = set(c3_data['GROUP_MAIL'].dropna())
+    colleague_emails = set(colleague_data['GROUP_MAIL'].dropna())
 
-    # Critère 1: Utilisateurs avec des domaines d'e-mail externes
-    external_emails = output_data[~output_data['GROUP_MAIL'].str.endswith('@votreentreprise.com')]
-    uncertain_users.extend(external_emails['GROUP_MAIL'].tolist())
+    emails_in_your_not_in_colleague = your_emails - colleague_emails
+    emails_in_colleague_not_in_your = colleague_emails - your_emails
+    common_emails = your_emails & colleague_emails
 
-    # Critère 2: Utilisateurs avec des titres de poste spécifiques (ajustez selon vos besoins)
-    specific_titles = synchro_data[synchro_data['CONTRACT_GROUP_TYPE_LABEL'].str.contains('Trainee|Apprenticeship|Extern-temp|International Business Volunte', na=False)]
-    uncertain_users.extend(specific_titles['GROUP_MAIL'].tolist())
-
-    # Supprimer les doublons
-    uncertain_users = list(set(uncertain_users))
-
-    # Export de la liste des noms à vérifier
-    pd.DataFrame(uncertain_users, columns=['GROUP_MAIL']).to_excel('Users_to_Verify.xlsx', index=False)
-    print_result(True, "Le fichier 'Users_to_Verify.xlsx' a été généré pour vérification manuelle.")
-
-# Test 6: Compter les utilisateurs IGAD et DFIN
-def test_count_igad_dfin():
-    print("\n" + Style.BRIGHT + "Test 6: Compter les utilisateurs IGAD et DFIN")
-    igad_users = synchro_data[synchro_data['LIB_SERVICE'].str.contains('IGAD', na=False)]
-    dfin_users = synchro_data[synchro_data['LIB_SERVICE'].str.contains('DFIN', na=False)]
-    
-    print(Fore.CYAN + f"Nombre d'utilisateurs dans IGAD: {len(igad_users)}")
-    print(Fore.CYAN + f"Nombre d'utilisateurs dans DFIN: {len(dfin_users)}")
-
-# Test 7: Comparaison des listes C3 potentielles
-def test_compare_potential_c3():
-    print("\n" + Style.BRIGHT + "Test 7: Comparaison des listes C3 potentielles")
-    # Chargement des mails des utilisateurs potentiellement C3
-    potential_c3_users = pd.read_excel('Potential_C3_Users_Comparison.xlsx')['GROUP_MAIL']
-    collegue_c3_users = set(collegue_data['GROUP_MAIL'].dropna())
-    script_output_c3_users = set(output_data['GROUP_MAIL'].dropna())
-
-    # Utilisateurs communs entre les trois listes
-    common_users = set(potential_c3_users).intersection(collegue_c3_users, script_output_c3_users)
-    # Utilisateurs spécifiques à chaque source
-    only_in_potential = set(potential_c3_users) - (collegue_c3_users | script_output_c3_users)
-    only_in_collegue = collegue_c3_users - (set(potential_c3_users) | script_output_c3_users)
-    only_in_script = script_output_c3_users - (set(potential_c3_users) | collegue_c3_users)
-
-    # Affichage des résultats
-    print(Fore.CYAN + f"Utilisateurs communs: {len(common_users)}")
-    print(Fore.YELLOW + f"Uniquement dans Potential_C3_Users_Comparison.xlsx: {len(only_in_potential)}")
-    print(Fore.YELLOW + f"Uniquement dans collegue.xlsx: {len(only_in_collegue)}")
-    print(Fore.YELLOW + f"Uniquement dans C3_accredited_users.xlsx: {len(only_in_script)}")
-
-    # Export des résultats pour vérification manuelle
-    pd.DataFrame({'Common Users': list(common_users)}).to_excel('Common_C3_Users.xlsx', index=False)
-    pd.DataFrame({'Only in Potential': list(only_in_potential)}).to_excel('Only_in_Potential_C3_Users.xlsx', index=False)
-    pd.DataFrame({'Only in Collegue': list(only_in_collegue)}).to_excel('Only_in_Collegue_C3_Users.xlsx', index=False)
-    pd.DataFrame({'Only in Script Output': list(only_in_script)}).to_excel('Only_in_Script_Output_C3_Users.xlsx', index=False)
-
-    print_result(True, "Les fichiers de comparaison des listes C3 ont été générés.")
-
-# Test 8: Vérification des utilisateurs de JDE.xlsx dans l'output final
-def test_users_in_jde():
-    print("\n" + Style.BRIGHT + "Test 8: Vérification des utilisateurs de JDE.xlsx dans l'output final")
-    jde_data = pd.read_excel('JDE.xlsx')
-    test_emails = set(jde_data['GROUP_MAIL'].dropna())
-
-    # Vérification de la présence dans l'output
-    present_users = test_emails & set(output_data['GROUP_MAIL'])
-    absent_users = test_emails - set(output_data['GROUP_MAIL'])
-
-    print(Fore.CYAN + f"Utilisateurs trouvés dans l'output: {len(present_users)}")
-    print(Fore.RED + f"Utilisateurs manquants dans l'output: {len(absent_users)}")
-    
-    if absent_users:
-        print_result(False, f"Les utilisateurs suivants de JDE.xlsx ne sont pas présents dans la liste des utilisateurs C3:\n{absent_users}")
+    if not emails_in_your_not_in_colleague:
+        print(Fore.GREEN + "[SUCCÈS] Tous les utilisateurs de votre liste se trouvent également dans celle du collègue.")
     else:
-        print_result(True, "Tous les utilisateurs de JDE.xlsx sont présents dans la liste des utilisateurs C3.")
+        print(Fore.RED + "[ÉCHEC] Les utilisateurs suivants sont dans votre liste mais pas dans celle du collègue :")
+        for email in emails_in_your_not_in_colleague:
+            print(Fore.RED + email)
 
-# Exécution des tests
-test_departments_igad_dfin()
-test_c3_dpt_only()
-test_nominative_users()
-test_excluded_users()
-test_users_to_verify()
-test_count_igad_dfin()
-test_compare_potential_c3()
-test_users_in_jde()
+    if not emails_in_colleague_not_in_your:
+        print(Fore.GREEN + "[SUCCÈS] Tous les utilisateurs de la liste du collègue se trouvent également dans la vôtre.")
+    else:
+        print(Fore.RED + "[ÉCHEC] Les utilisateurs suivants sont dans la liste du collègue mais pas dans la vôtre :")
+        for email in emails_in_colleague_not_in_your:
+            print(Fore.RED + email)
+
+def test_comparison_with_provided_lists():
+    print(Fore.BLUE + "\n--- Test de comparaison avec les listes fournies ---")
+    c3_mails_depts = c3_data[['GROUP_MAIL', 'DEPARTEMENT']].dropna()
+    c3_mails_depts_set = set(tuple(x) for x in c3_mails_depts.to_numpy())
+
+    jerome_missing = set(tuple(x) for x in jerome_data.to_numpy())
+    missing_from_c3 = jerome_missing - c3_mails_depts_set
+
+    clement_extra = set(tuple(x) for x in clement_data.to_numpy())
+    expected_in_c3 = clement_extra & c3_mails_depts_set
+
+    def print_comparison_result(label, missing_from_c3, expected_in_c3):
+        if missing_from_c3:
+            print(Fore.RED + f"[ÉCHEC] {label} - Utilisateurs manquants dans le C3:")
+            for email, dept in missing_from_c3:
+                print(Fore.RED + f"Email: {email}, Département: {dept}")
+        else:
+            print(Fore.GREEN + f"[SUCCÈS] {label} - Tous les utilisateurs sont correctement inclus.")
+
+        if expected_in_c3:
+            print(Fore.YELLOW + f"[ATTENTION] {label} - Utilisateurs trouvés mais inattendus dans le C3:")
+            for email, dept in expected_in_c3:
+                print(Fore.YELLOW + f"Email: {email}, Département: {dept}")
+
+    print_comparison_result("Comparaison avec les utilisateurs manquants (Jerome)", missing_from_c3, expected_in_c3)
+    print_comparison_result("Comparaison avec les utilisateurs inattendus (Clement)", clement_extra - c3_mails_depts_set, None)
+
+def main():
+    test_nominative_users()
+    test_excluded_users()
+    test_comparison_with_colleague()
+    test_comparison_with_provided_lists()
+
+if __name__ == "__main__":
+    main()
