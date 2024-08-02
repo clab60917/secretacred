@@ -1,6 +1,5 @@
 import pandas as pd
 from colorama import Fore, Style, init
-from openpyxl import load_workbook
 
 # Initialiser colorama pour les couleurs dans le terminal
 init(autoreset=True)
@@ -38,9 +37,7 @@ def test_nominative_users():
 
 def test_excluded_users():
     print(Fore.BLUE + "\n--- Test des utilisateurs à exclure ---")
-    dpts_user_to_exclude = load_workbook(comparison_file, read_only=True)['DPTS-USER TO BE EXCLUDED']
-    excluded_emails = {row[4].value for row in dpts_user_to_exclude.iter_rows(min_row=2) if row[4].value}
-    excluded_emails = excluded_emails - {None}
+    excluded_emails = set(comparison_data['DPTS-USER TO BE EXCLUDED']['Mail'].dropna())
     
     c3_emails = set(c3_data['GROUP_MAIL'].dropna())
 
